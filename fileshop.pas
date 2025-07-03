@@ -23,11 +23,13 @@ Program FILESHOP;
   See unit file TVDMXBUF.PAS for more information on the TDmxExpBuf object.
  }
 
-{$M 16384,8192,655360 }
-{$B-,R-,X+,V- }
+//{$M 16384,8192,655360 }
+//{$B-,R-,X+,V- }
+{$mode objfpc}{$H+}
 
-uses  Objects, Drivers, Views, Menus, App, MsgBox,
-      RSet, DmxGizma, tvDMX, tvDMXBUF, tvGizma;
+uses  
+    Objects, Drivers, Views, Menus, App, MsgBox,
+    RSet, DmxGizma, tvDMX, tvDMXBUF, tvGizma;
 
 const
     xLabels	=  ' String Field            +Real         Real      Word   Seg : Ofs ';

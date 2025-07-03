@@ -13,11 +13,15 @@
 
 Unit DMXGIZMA;
 
-{$V-,X+,O+,D+,B-,R- }
+//{$V-,X+,O+,D+,B-,R- }
+{$mode objfpc}{$H+}
 
 interface
 
-uses  Objects, Drivers, Views, Dialogs, App, RSet;
+uses  
+    SysUtils, 
+    Objects, Drivers, Views, Dialogs, App, 
+    RSet;
 
 {$DEFINE tvDMX2A }
 
@@ -537,7 +541,8 @@ var  i,j,Len	:  integer;
       If (Zero) and not ((fieldrec^.showzeroes) or (showanyway in Show)) then
 	begin
 	fillchar(A[1], Len, ' ');
-	A[0]	   := chr(Len);
+	// A[0]	   := chr(Len);
+	A[1]	   := chr(Len);
 	ItsBlank   := TRUE;
 	CheckBlank := TRUE;
 	end
@@ -555,7 +560,8 @@ var  i,j,Len	:  integer;
 	If (w and $7FF0 = $7FF0) then
 	  begin
 	  fillchar(A[1], Len, ' ');
-	  A[0]	   := chr(Len);
+  	  //A[0]	   := chr(Len);
+	  A[1]	   := chr(Len);
 	  ItsBlank := TRUE;
 	  CheckInfinity := TRUE;
 	  end;
@@ -591,7 +597,8 @@ var  i,j,Len	:  integer;
 	If (A[1] <> ' ') then
 	  begin
 	  fillchar(A[1], Len, showOVERFLOW);
-	  A[0] := chr(Len);
+	  // A[0] := chr(Len);
+	  A[1] := chr(Len);
 	  end
 	 else
 	  begin
@@ -618,7 +625,8 @@ begin
     If (upcase(typecode) = fldENUM) then
       begin
       fillchar(T[1], columnwid, ' ');
-      T[0] := chr(columnwid);
+      // T[0] := chr(columnwid);
+      T[1] := chr(columnwid);
       end
      else
       T  := template^;
@@ -644,7 +652,8 @@ begin
 	  begin
 	  fillchar(A[1], Len, ' ');
 	  Move(DataStr^[1], A[1], length(DataStr^));
-	  A[0] := chr(Len);
+	  // A[0] := chr(Len);
+	  A[1] := chr(Len);
 	  end;
 	end;
 
@@ -656,13 +665,15 @@ begin
 	If not CheckBlank(not Q) then
 	  begin
 	  Move(Data^, A[1], Len);
-	  A[0] := chr(Len);
+	  // A[0] := chr(Len);
+	  A[1] := chr(Len);
 	  end;
 	end;
 
       fldCHARVAL:			{ 'N' }
 	begin
-	A[0] := chr(fieldsize);
+	// A[0] := chr(fieldsize);
+	A[1] := chr(fieldsize);
 	Move(Data^, A[1], fieldsize);
 	Val(A, R, i);
 	If i <> 0 then R := 0.0;
@@ -748,7 +759,8 @@ begin
 	      fillchar(A[1], Len, showTRUE)
 	     else
 	      fillchar(A[1], Len, showFALSE);
-	    A[0] := chr(Len);
+	    // A[0] := chr(Len);
+	    A[1] := chr(Len);
 	    end;
 	  end;
 	end;
@@ -791,7 +803,8 @@ begin
 	    fillchar(A[1], Len, showRadioBtn)
 	   else
 	    fillchar(A[1], Len, ' ');
-	  A[0] := chr(Len);
+	  // A[0] := chr(Len);
+	  A[1] := chr(Len);
 	  end
 	 else
 	  begin
@@ -799,7 +812,8 @@ begin
 	    fillchar(A[1], Len, showCheckBox)
 	   else
 	    fillchar(A[1], Len, ' ');
-	  A[0] := chr(Len);
+	  // A[0] := chr(Len);
+	  A[1] := chr(Len);
 	  end;
 	end;
 

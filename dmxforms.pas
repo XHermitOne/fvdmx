@@ -13,12 +13,14 @@
 
 Unit DMXFORMS;
 
-{$B-,D+,O+,R-,V-,X+ }
+//{$B-,D+,O+,R-,V-,X+ }
+{$mode objfpc}{$H+}
 
 interface
 
-uses Objects, Drivers, Memory, Views, Dialogs, Menus, App,
-     RSet, DmxGizma, tvDMX, Avail;
+uses 
+    Objects, Drivers, Memory, Views, Dialogs, Menus, App,
+    RSet, DmxGizma, tvDMX, Avail;
 
 const
     { additional buttons and options for EntryBox }
@@ -227,7 +229,8 @@ begin
     DMX^.HScrollBar := HScrollBar;
     DMX^.VScrollBar := VScrollBar;
     Move(AForm, S[1], sizeof(PSItem));
-    S[0] := #4;
+    // S[0] := #4;
+    S[1] := #4;
     DMX^.InitStruct(S);
     If not LowMemory and (DMX^.RecordSize > 0) then
       begin

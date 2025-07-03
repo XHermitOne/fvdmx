@@ -13,11 +13,14 @@
 
 Unit tvDMXHEX;
 
-{$V-,X+,O+,D-,B-,R- }
+// {$V-,X+,O+,D-,B-,R- }
+{$mode objfpc}{$H+}
 
 interface
 
-uses  Objects, Drivers, Views, Menus, App, RSet, DmxGizma, tvDMX, StdDMX;
+uses  
+    Objects, Drivers, Views, Menus, App, 
+    RSet, DmxGizma, tvDMX, StdDMX;
 
 
 const

@@ -45,7 +45,8 @@ Program COLLECTR;
 
  *)
 
-{$V-,X+,B-,R- }
+// {$V-,X+,B-,R- }
+{$mode objfpc}{$H+}
 
 uses
     Objects, Drivers, Memory, Views, Menus, App, MsgBox,

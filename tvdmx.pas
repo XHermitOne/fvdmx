@@ -12,11 +12,14 @@
 
 Unit tvDMX;
 
-{$B-,D+,O+,R-,V-,X+ }
+// {$B-,D+,O+,R-,V-,X+ }
+{$mode objfpc}{$H+}
 
 interface
 
-uses  Objects, Drivers, Views, Dialogs, App, RSet, DmxGizma, Avail;
+uses  
+    Objects, Drivers, Views, Dialogs, App, 
+    RSet, DmxGizma, Avail;
 
 var
     DrawingRecNum  :  integer;
@@ -385,7 +388,8 @@ begin
     If (Link^.Delta.X + Size.X > Len) then
       fillchar(A[succ(Len - Link^.Delta.X)],(Size.X + Link^.Delta.X - Len), ' ');
     end;
-  A[0] := chr(lo(Size.X));
+  // A[0] := chr(lo(Size.X));
+  A[1] := chr(lo(Size.X));
   MoveStr(B, A, GetColor(1));
   If (Link^.Origin.Y <= Origin.Y) then i := pred(Size.Y) else i := 0;
   WriteLine(0, i, Size.X, 1, B);
@@ -833,14 +837,16 @@ begin
 	  begin
 	  If (@DataRecord = @EmptyRecord) then
 	    begin
-	    A[0] := chr(fieldrec^.shownwid);
+	    // A[0] := chr(fieldrec^.shownwid);
+	    A[1] := chr(fieldrec^.shownwid);
 	    fillchar(A[1], fieldrec^.shownwid, ' ');
 	    end
 	   else
 	    A	:= FieldString(fieldrec,[], DataRecord);
 	  If fieldsize > 0 then Color := ColorA else Color := ColorB;
 	  FieldText(A, Color, fieldrec, DataRecord);
-	  If length(A) > shownwid then A[0] := chr(shownwid);
+	  // If length(A) > shownwid then A[0] := chr(shownwid);
+	  If length(A) > shownwid then A[1] := chr(shownwid);
 	  If frontcut > 0 then Delete(A, 1, frontcut);
 	  end;
 	frontcut := 0;
@@ -1835,7 +1841,8 @@ begin
 		If k > 1 then S[1] := lpoint
 		 else
 		  begin
-		  System.Insert(lpoint, S, 1);
+		  // System.Insert(lpoint, S, 1);
+		  Insert(lpoint, S, 1);
 		  Inc(k);
 		  Inc(FirstPos);
 		  end;
@@ -2464,7 +2471,8 @@ var i,j,k : integer;
 	If (decimals > 0) then i := succ(truelen) else i := truelen;
 	If not HEX and (length(A) > i) then
 	  begin
-	  A[0] := chr(i);
+	  // A[0] := chr(i);
+	  A[1] := chr(i);
 	  fillchar(A[1], length(A), '0');
 	  If length(A) - decimals > 2 then
 	    fillchar(A[1], length(A) - decimals - 2, ' ');
@@ -2818,7 +2826,8 @@ begin
 	    fldCHARVAL:
 	      begin
 	      Move(FieldData^, A[1], fieldsize);
-	      A[0] := chr(fieldsize);
+	      // A[0] := chr(fieldsize);
+	      A[1] := chr(fieldsize);
 	      j := 0;
 	      For i := 1 to fieldsize do
 		begin
@@ -2943,7 +2952,8 @@ begin
 		If (length(A) > truelen) then Delete(A, 1,1);
 		If EffectField(TRUE, 0, 0) then
 		  begin
-		  If odd(length(A)) then A[0] := '0' else Move(A[1], A[0], length(A));
+		  // If odd(length(A)) then A[0] := '0' else Move(A[1], A[0], length(A));
+		  If odd(length(A)) then A[1] := '0' else Move(A[2], A[1], length(A));
 		  For i := 0 to pred(fieldsize) do
 		    begin
 		    j := ord(A[i shl 1]);

@@ -13,12 +13,15 @@
 
 Unit tvDMXREP;
 
-{$V-,X+,B-,R-,I- }
+// {$V-,X+,B-,R-,I- }
+{$mode objfpc}{$H+}
 
 interface
 
 uses
-    Dos, Objects, Drivers, Memory, Views, Dialogs, Menus, App, MsgBox,
+    // Dos, 
+    SysUtils,
+    Objects, Drivers, Memory, Views, Dialogs, Menus, App, MsgBox,
     RSet, DmxGizma, tvGizma, tvDMX, StdDMX;
 
 const
@@ -376,14 +379,16 @@ begin
 	  begin
 	  If (DataRec = nil) then
 	    begin
-	    A[0] := char(fieldrec^.shownwid);
+	    // A[0] := char(fieldrec^.shownwid);
+	    A[1] := char(fieldrec^.shownwid);
 	    fillchar(A[1], length(A), ' ');
 	    end
 	   else
 	    begin
 	    A	:= FieldString(fieldrec,[], DataRec^);
 	    DMX^.FieldText(A, Color, fieldrec, DataRec^);
-	    A[0] := char(fieldrec^.shownwid);
+	    // A[0] := char(fieldrec^.shownwid);
+	    A[1] := char(fieldrec^.shownwid);
 	    end;
 	  For i := 1 to length(A) do
 	    If (A[i] <= #31) or ((Delimiter <> #0) and (A[i] >= #127)) then
@@ -772,7 +777,8 @@ begin
       D^.GetData(PrnOpt);
       While (PrnOpt.FName[length(PrnOpt.FName)] = ' ') do Dec(PrnOpt.FName[0]);
       While (PrnOpt.FName[1] = ' ') and (length(PrnOpt.FName) > 0) do
-	System.Delete(PrnOpt.FName, 1,1);
+	// System.Delete(PrnOpt.FName, 1,1);
+	Delete(PrnOpt.FName, 1,1);
       PrnSetOptions := cmOK;
       end;
     Dispose(D, Done);
@@ -901,9 +907,12 @@ end;
   { ══════════════════════════════════════════════════════════════════════ }
 
 var R : TRect;
-    D : DirStr;
-    N : NameStr;
-    X : ExtStr;
+    // D : DirStr;
+    // N : NameStr;
+    // X : ExtStr;
+    D : String;
+    N : String;
+    X : String;
 
 Begin
   PrnOpt.Dest	 := 1;
@@ -912,7 +921,11 @@ Begin
   PrnOpt.Wid	 := 78;
   If (ParamStr(0) = '') then PrnOpt.FName := 'FILE.OUT' else
     begin
-    FSplit(ParamStr(0), D,N,X);
+    // FSplit(ParamStr(0), D, N, X);
+    D := ExtractFilePath(ParamStr(0));
+    N := ExtractFileName(ParamStr(0));
+    X := ExtractFileExt(ParamStr(0));
+
     PrnOpt.FName := N + '.OUT';
     end;
 End.

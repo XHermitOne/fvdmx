@@ -13,11 +13,14 @@
 
 Program FORMSHOP;
 
-{$M 16384,16384,655360}
-{$V-,X+,D+,B-,R- }
+//{$M 16384,16384,655360}
+//{$V-,X+,D+,B-,R- }
+{$mode objfpc}{$H+}
 
 uses
-    Dos, Crt,
+    // Dos, 
+    SysUtils,
+    Crt,
     Objects, Drivers, Views, Dialogs, Menus, App, MsgBox,
     RSet, DmxGizma, tvDMX, tvGizma, DmxForms, tvDmxRep;
 

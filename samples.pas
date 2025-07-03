@@ -72,14 +72,18 @@ Program SAMPLES;
   (See file TVDMXHEX.PAS for the code used in the hexadecimal byte editor.)
  }
 
-{$V-,X+ }
+//{$V-,X+ }
+{$mode objfpc}{$H+}
+// {$DEFINE FV_UNICODE}
 
 uses
-    Dos, { required to define DateTime type }
+    // Dos, { required to define DateTime type }
+    SysUtils, 
     Crt, { required for Sound() procedure used by cmChime command }
     Objects, Drivers, Views, Menus, Dialogs, App, MsgBox,
     RSet, DmxGizma, tvGizma, tvDMX, StdDMX, tvDmxHex, tvDmxRep, DmxForms,
-    Avail;
+    Avail,
+    FVCommon;
 
 const
     cmAbout	  =  101;
@@ -127,7 +131,9 @@ const
   { ══ Accounts template and data structure ══════════════════════════════ }
 
 const
-    AccountLabel : string[80] =
+    //AccountLabel : string[80] =
+    // ' Transaction          Debit        Credit      [?] ';
+    AccountLabel : string =
 	' Transaction          Debit        Credit      [?] ';
 
     AccountInfo  : string[80] =
@@ -175,7 +181,8 @@ const { The Busy Window's template uses many of the special options.  Since
     _BusyLabel	  =
 	' Name                  SSN             Balance      Start Date   Time   <A>  [B]   Pointer       Value     RO ';
 
-    BusyLabel	  :  string[length(_BusyLabel)] =  _BusyLabel;
+    // BusyLabel	  :  string[length(_BusyLabel)] =  _BusyLabel;
+    BusyLabel	  :  string =  _BusyLabel;
 
 type
     PBusyData	  = ^TBusyData;
@@ -184,7 +191,8 @@ type
 	Name		:  string[30];
 	SSN		:  string[9];
 	realfield1	:  TREALNUM;
-	DT		:  datetime;
+	// DT		:  datetime;
+	DT		:  TDateTime;
 	intfield0	:  integer;	{ READ-ONLY }
 	intfield1	:  integer;
 	ptrfield	:  pointer;
@@ -283,7 +291,8 @@ type
 
     PMyStatusLine  = ^TMyStatusLine;
     TMyStatusLine  =  OBJECT(TStatusLine)
-      function	Hint(AHelpCtx: word) : string;  VIRTUAL;
+      // function	Hint(AHelpCtx: word): String;  VIRTUAL;
+      function	Hint(AHelpCtx: word): Sw_String;  VIRTUAL;
     end;
 
 
@@ -323,7 +332,8 @@ var
   { ══ TMyStatusLine ═════════════════════════════════════════════════════ }
 
 
-function  TMyStatusLine.Hint(AHelpCtx: word) : string;
+// function  TMyStatusLine.Hint(AHelpCtx: word) : String;
+function  TMyStatusLine.Hint(AHelpCtx: word) : Sw_String;
 begin
   Case AHelpCtx of
     hcDragging:   Hint := #24#25#26#27' Move  Shift-'#24#25#26#27' Resize  '#17#196#217' Done  Esc Cancel';
@@ -699,12 +709,12 @@ procedure TMyApp.HandleEvent(var Event: TEvent);
 	begin
 	Options := Options or ofCentered;
 	R.Grow(-1,-2);
-	FormatStr(S, '%s'^M^C'Memory available: %d'^M^C'[%s mode]',
-		sparam(@Intro,
-		dparam(MemAvail,
-		sparam(@VStr,
-			nil)))^
-		);
+	//FormatStr(S, '%s'^M^C'Memory available: %d'^M^C'[%s mode]',
+	//	sparam(@Intro,
+	//	dparam(MemAvail,
+	//	sparam(@VStr,
+	//		nil)))^
+	//	);
 	Insert(New(PStaticText, Init(R, S)));
 	R.Assign(16, 10, 26, 12);
 	Insert(New(PButton, Init(R, 'O~K~', cmOK, bfDefault)));
@@ -1107,8 +1117,10 @@ end;
 
 procedure InitializeData;
 { creates test data }
-var  i,j  : integer;
-     F	  : SearchRec;
+var  i, j  : integer;
+     // F	  : SearchRec;
+     F	  : TSearchRec;
+     find_error: LongInt;
 
     procedure InitAccount(ARecNum: integer; AName: string);
     begin
@@ -1135,12 +1147,13 @@ var  i,j  : integer;
 	  ptrfield	:= pointer(random(MaxInt));
 	  realfield1	:= random(200) * random(200) / succ(random(199));
 	  realfield2	:= random(200) * random(200) / succ(random(199));
-	  DT.Year	:= 1988 + random(4);
-	  DT.Month	:= succ(random(12));
-	  DT.Day	:= succ(random(28));
-	  DT.Hour	:= random(24);
-	  DT.Min	:= random(60);
-	  DT.Sec	:= random(60);
+	  // DT.Year	:= 1988 + random(4);
+	  // DT.Month	:= succ(random(12));
+	  // DT.Day	:= succ(random(28));
+	  // DT.Hour	:= random(24);
+	  // DT.Min	:= random(60);
+	  // DT.Sec	:= random(60);
+          DT := EncodeDate(1988 + random(4), succ(random(12)), succ(random(28))) + EncodeTime(random(24), random(60), random(60), 0);
 	  SSN[0]	:= #9;
 	  For i := 1 to 9 do SSN[i] := chr(random(10) + 48);
 	  end;
@@ -1229,24 +1242,33 @@ begin
   InvoiceRec.TPversion := 8.0;
   {$ENDIF }
 
-  FindFirst('\TVDT', Directory, F);
-  If (DosError = 0) then
+  // FindFirst('\TVDT', Directory, F);
+  find_error := FindFirst('\TVDT', faDirectory, F);
+  // If (DosError = 0) then
+  If (find_error = 0) then
     begin
     InvoiceRec.Tools := InvoiceRec.Tools or Blaise;
     InvoiceRec.BlaiseProd := 'TVDT';
     end;
 
-  FindFirst('\PXENG*.', Directory, F);
-  While (DosError = 0) and (F.Attr and Directory = 0) do FindNext(F);
-  If (DosError = 0) then InvoiceRec.Tools := InvoiceRec.Tools or PXE;
+  // FindFirst('\PXENG*.', Directory, F);
+  find_error := FindFirst('\PXENG*.', faDirectory, F);
+  // While (DosError = 0) and (F.Attr and faDirectory = 0) do FindNext(F);
+  // If (DosError = 0) then InvoiceRec.Tools := InvoiceRec.Tools or PXE;
+  While (find_error = 0) and (F.Attr and faDirectory = 0) do FindNext(F);
+  If (find_error = 0) then InvoiceRec.Tools := InvoiceRec.Tools or PXE;
 
-  FindFirst('\CIM', Directory, F);
-  If (DosError = 0) then
+  // FindFirst('\CIM', Directory, F);
+  find_error := FindFirst('\CIM', faDirectory, F);
+  // If (DosError = 0) then
+  If (find_error = 0) then
     InvoiceRec.WhoSaid := CIS
    else
     begin
-    FindFirst('\WINCIM', Directory, F);
-    If (DosError = 0) then InvoiceRec.WhoSaid := CIS;
+    // FindFirst('\WINCIM', Directory, F);
+    find_error := FindFirst('\WINCIM', faDirectory, F);
+    // If (DosError = 0) then InvoiceRec.WhoSaid := CIS;
+    If (find_error = 0) then InvoiceRec.WhoSaid := CIS;
     end;
 
 end;

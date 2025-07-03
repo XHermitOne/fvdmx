@@ -13,7 +13,8 @@
 
 Unit StdDMX;
 
-{$B-,D+,O+,R-,X+,V- }
+// {$B-,D+,O+,R-,X+,V- }
+{$mode objfpc}{$H+}
 
 interface
 

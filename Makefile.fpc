@@ -2,14 +2,23 @@
 programs=samples
 
 [compiler]
-#unitdir=/home/xhermit/fpcupdeluxe/fv_utf8
-#unitdir=/home/xhermit/fpcupdeluxe/fv_unicode
+#options=-k--no-relax
+options=-va -k--no-relax -g
+#unitdir=~/fpcupdeluxe/fv_utf8
 #unitdir=./unilib/utils
 #unitdir=../../rtl-console/src/unix
 #unitdir=../../rtl-unicode/src/inc
 #unitdir=../../rtl-extra/src/inc
 #includedir=../../rtl-console/src/inc
 # includedir=./unilib/include
+unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl
+#unitdir=~/fpcupdeluxe/fpcsrc/rtl/
+unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-console
+unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-unicode
+unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-extra
+unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-objpas
+unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/fv
+# includedir=~/fpcupdeluxe/fpcsrc/packages/fv/src/
 
 [default]
-fpcdir=/home/xhermit/fpcupdeluxe/fpc/bin/x86_64-linux/
+fpcdir=~/fpcupdeluxe/fpc/bin/x86_64-linux/

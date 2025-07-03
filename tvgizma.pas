@@ -12,13 +12,17 @@
 
 Unit tvGIZMA;
 
-{$B-,O+,R-,V-,X+ }
+// {$B-,O+,R-,V-,X+ }
+{$mode objfpc}{$H+}
 
 interface
 
 uses
-    Dos, Crt, Objects, Drivers, Memory, Dialogs, Menus,
-    HistList, Views, App, MsgBox, RSet, DmxGizma;
+    // Dos, 
+    SysUtils, DateUtils,
+    Crt, 
+    Objects, Drivers, Memory, Dialogs, Menus, HistList, Views, App, MsgBox, 
+    RSet, DmxGizma;
 
 const
     BeepOn	   : boolean = TRUE;	{ allows beeping from cmBeep event }
@@ -43,6 +47,8 @@ type
       destructor  Done;  VIRTUAL;
       procedure EventError(var Event: TEvent);  VIRTUAL;
       procedure HandleEvent(var Event: TEvent);  VIRTUAL;
+      //procedure EventError(var Event: TEvent);
+      //procedure HandleEvent(var Event: TEvent);
       procedure Idle;  VIRTUAL;
       procedure InitClock;  VIRTUAL;
       function  LoadConfigFile(FName: FNameStr; Header: pstring) : boolean;
@@ -83,6 +89,7 @@ type
       constructor Init(var Bounds: TRect; AHScrollBar,AVScrollBar: PScrollBar);
       procedure Draw;  VIRTUAL;
       procedure HandleEvent(var Event: TEvent);  VIRTUAL;
+      //procedure HandleEvent(var Event: TEvent);
       function	Valid(Command: word) : boolean;  VIRTUAL;
     end;
 
@@ -842,9 +849,16 @@ end;
 
 
 procedure TTimeView.Update;
-var  H,M,T : word;
+var  
+  H, M, T: word;
+  dt: TDateTime;
 begin
-  GetTime(H,M,Sec,T);
+  // GetTime(H, M, Sec, T);
+  dt := Time();
+  H := HourOf(dt);
+  M := MinuteOf(dt);
+  Sec := SecondOf(dt);
+  T := MilliSecondOf(dt);
   If (Hour <> H) or (Min <> M) then
     begin
     Hour := H;

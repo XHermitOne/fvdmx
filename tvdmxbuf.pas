@@ -13,7 +13,8 @@
 
 Unit tvDMXBUF;
 
-{$B-,D+,R-,O+,X+,V- }
+// {$B-,D+,R-,O+,X+,V- }
+{$mode objfpc}{$H+}
 
 interface
 

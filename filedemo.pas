@@ -17,8 +17,9 @@
 
 Program FILEDEMO;
 
-{$M 16384,8192,655360 }
-{$B-,I-,R-,X+,V- }
+//{$M 16384,8192,655360 }
+//{$B-,I-,R-,X+,V- }
+{$mode objfpc}{$H+}
 
 uses  Objects, Drivers, Views, Menus, App, MsgBox,
       RSet, DmxGizma, tvGizma, tvDMX, tvDMXBUF, tvDMXREP;
