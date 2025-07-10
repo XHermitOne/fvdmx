@@ -26,7 +26,8 @@ uses
 
 const
     BeepOn	   : boolean = TRUE;	{ allows beeping from cmBeep event }
-    PreserveScreen : boolean = TRUE;	{ restore screen after done }
+    //PreserveScreen : boolean = TRUE;	{ restore screen after done }
+    PreserveScreen : boolean = False;	{ restore screen after done }
 
     SoundIndOn		= ' ON';	{ On & Off must be the same length }
     SoundIndOff		= 'OFF';
@@ -180,7 +181,7 @@ var	KeptCol, KeptRow  : byte;
 	KeptHeight	  : integer;
 
 
-  { ══ Param Functions ═══════════════════════════════════════════════════ }
+{ ══ Param Functions ═══════════════════════════════════════════════════ }
 
 const	iparmax			= 15;  { max number of parameters - 1 }
 	ipar	: integer	= iparmax;
@@ -212,7 +213,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 procedure AssignWinRect(var Bounds: TRect;  MaxX,MaxY: integer);
@@ -244,7 +245,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 function  InsertLine(Dialog: PDialog;	Col,Row,Width,Max: integer;
@@ -279,7 +280,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 function  InsertText(Dialog: PDialog; Col,Row: integer; AText: string) : PView;
@@ -296,7 +297,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 function  NewVarItem(Name, Param: TMenuStr; var Ind: pstring;
@@ -310,7 +311,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 function  wnNextAvail : integer;
@@ -326,7 +327,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 procedure TrimDialog(Window: PWindow);
@@ -367,7 +368,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 function  StdMenuHint(AHelpCtx: word) : string;
@@ -417,27 +418,28 @@ begin
 end;
 
 
-  { ══ TAppA ═════════════════════════════════════════════════════════════ }
+{ ══ TAppA ═════════════════════════════════════════════════════════════ }
 
 
 constructor TAppA.Init;
 begin
   InitMemory;
   InitVideo;
-  //If PreserveScreen and (StartupMode = ScreenMode) then
+  // If PreserveScreen and (StartupMode = ScreenMode) then
   If PreserveScreen then
-    begin
+  begin
    {$IFDEF VER60 }
     GetBufMem(pointer(KeptScreen), sizeof(TVideoBuf));
    {$ELSE }
     NewCache(pointer(KeptScreen), sizeof(TVideoBuf));
    {$ENDIF }
-    If (KeptScreen <> nil) then Move(ScreenBuffer^, KeptScreen^, sizeof(KeptScreen^));
+    If (ScreenBuffer <> nil) and (KeptScreen <> nil) then 
+      Move(ScreenBuffer^, KeptScreen^, sizeof(KeptScreen^));
     KeptCol := WhereX;
     KeptRow := WhereY;
     KeptHeight := ScreenHeight;
     end
-   else
+  else
     KeptScreen := nil;
   InitEvents;
   InitSysError;
@@ -739,7 +741,7 @@ begin
 end;
 
 
-  { ══ TLtdFrame ═════════════════════════════════════════════════════════ }
+{ ══ TLtdFrame ═════════════════════════════════════════════════════════ }
 
 
 procedure TLtdFrame.Draw;
@@ -759,7 +761,7 @@ begin
 end;
 
 
-  { ══ TLtdWindow ════════════════════════════════════════════════════════ }
+{ ══ TLtdWindow ════════════════════════════════════════════════════════ }
 
 
 constructor TLtdWindow.Init(var Bounds,ALimit	: TRect;
@@ -817,7 +819,7 @@ begin
 end;
 
 
-  { ══ TTimeView ═════════════════════════════════════════════════════════ }
+{ ══ TTimeView ═════════════════════════════════════════════════════════ }
 
 
 constructor TTimeView.Init(var Bounds: TRect);
@@ -870,7 +872,7 @@ begin
 end;
 
 
-  { ══ TUserScreen ═══════════════════════════════════════════════════════ }
+{ ══ TUserScreen ═══════════════════════════════════════════════════════ }
 
 
 constructor TUserScreen.Init(var Bounds: TRect; AHScrollBar,AVScrollBar: PScrollBar);
@@ -927,7 +929,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 procedure RegisterTVGizma;
@@ -937,7 +939,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 End.

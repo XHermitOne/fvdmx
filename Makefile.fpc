@@ -3,7 +3,10 @@ programs=samples
 
 [compiler]
 #options=-k--no-relax
-options=-va -k--no-relax -g
+#options=-k-shared
+#options=-va -k--no-relax -g
+#options=-k"-no-pie"
+#options=-k"-fuse-ld=gold"
 #unitdir=~/fpcupdeluxe/fv_utf8
 #unitdir=./unilib/utils
 #unitdir=../../rtl-console/src/unix
@@ -11,14 +14,21 @@ options=-va -k--no-relax -g
 #unitdir=../../rtl-extra/src/inc
 #includedir=../../rtl-console/src/inc
 # includedir=./unilib/include
-unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl
+#unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl
 #unitdir=~/fpcupdeluxe/fpcsrc/rtl/
-unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-console
-unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-unicode
-unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-extra
-unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-objpas
-unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/fv
+#unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-console
+#unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-unicode
+#unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-extra
+#unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/rtl-objpas
+#unitdir=~/fpcupdeluxe/fpc/units/x86_64-linux/fv
 # includedir=~/fpcupdeluxe/fpcsrc/packages/fv/src/
 
-[default]
-fpcdir=~/fpcupdeluxe/fpc/bin/x86_64-linux/
+unitdir=/usr/lib/x86_64-linux-gnu/fpc/3.2.2/units/x86_64-linux/rtl
+unitdir=/usr/lib/x86_64-linux-gnu/fpc/3.2.2/units/x86_64-linux/rtl-console
+unitdir=/usr/lib/x86_64-linux-gnu/fpc/3.2.2/units/x86_64-linux/rtl-unicode
+unitdir=/usr/lib/x86_64-linux-gnu/fpc/3.2.2/units/x86_64-linux/rtl-extra
+unitdir=/usr/lib/x86_64-linux-gnu/fpc/3.2.2/units/x86_64-linux/rtl-objpas
+unitdir=/usr/lib/x86_64-linux-gnu/fpc/3.2.2/units/x86_64-linux/fv
+
+#[default]
+#fpcdir=~/fpcupdeluxe/fpc/bin/x86_64-linux/

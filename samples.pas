@@ -78,7 +78,8 @@ Program SAMPLES;
 
 uses
     // Dos, { required to define DateTime type }
-    SysUtils, 
+    Unix, 
+    SysUtils, // UnixUtil, Video,
     Crt, { required for Sound() procedure used by cmChime command }
     Objects, Drivers, Views, Menus, Dialogs, App, MsgBox,
     RSet, DmxGizma, tvGizma, tvDMX, StdDMX, tvDmxHex, tvDmxRep, DmxForms,
@@ -128,7 +129,7 @@ const
     hcPrnOpt	  = hcOptions + 3;
 
 
-  { ══ Accounts template and data structure ══════════════════════════════ }
+{ ══ Accounts template and data structure ══════════════════════════════ }
 
 const
     //AccountLabel : string[80] =
@@ -136,7 +137,9 @@ const
     AccountLabel : string =
 	' Transaction          Debit        Credit      [?] ';
 
-    AccountInfo  : string[80] =
+    //AccountInfo  : string[80] =
+	//' SSSSSSSSSSSSSSSS`SSSSSSSSSS| rrr,rrr.zz  | rrr,rrr.zz  | [x] ';
+    AccountInfo  : string =
 	' SSSSSSSSSSSSSSSS`SSSSSSSSSS| rrr,rrr.zz  | rrr,rrr.zz  | [x] ';
 
       { Note that the '`' character marks the end of the visible field. }
@@ -144,14 +147,15 @@ const
 type
     PAccount	  = ^TAccount;
     TAccount	  =  RECORD
-	Account	:  string[26];
+	//Account	:  string[26];
+	Account	:  string;
 	Debit	:  TREALNUM;
 	Credit	:  TREALNUM;
 	Status	:  boolean;
     end;
 
 
-  { ══ Payroll template and data structure ═══════════════════════════════ }
+{ ══ Payroll template and data structure ═══════════════════════════════ }
 
 const { The last three fields are marked READ-ONLY, and are automatically
 	entered by the virtual methods in object TDmxPayroll. }
@@ -163,7 +167,8 @@ const { The last three fields are marked READ-ONLY, and are automatically
 type
     PPayroll	  = ^TPayroll;
     TPayroll	  =  RECORD
-	Employee :  string[22];
+	//Employee :  string[22];
+	Employee :  string;
 	ID	 :  word;
 	Earnings :  TREALNUM;
 	FICA	 :  TREALNUM;  { READ-ONLY }
@@ -172,7 +177,7 @@ type
     end;
 
 
-  { ══ Busy data structure ═══════════════════════════════════════════════ }
+{ ══ Busy data structure ═══════════════════════════════════════════════ }
 
 const { The Busy Window's template uses many of the special options.  Since
 	it uses an enumerated field, the template is defined in the method
@@ -188,8 +193,10 @@ type
     PBusyData	  = ^TBusyData;
     TBusyData	  =  RECORD
 	Marker		:  byte;	{ HIDDEN field }
-	Name		:  string[30];
-	SSN		:  string[9];
+	//Name		:  string[30];
+	Name		:  string;
+	//SSN		:  string[9];
+	SSN		:  string;
 	realfield1	:  TREALNUM;
 	// DT		:  datetime;
 	DT		:  TDateTime;
@@ -201,7 +208,7 @@ type
     end;
 
 
-  { ══ Invoice data structure ════════════════════════════════════════════ }
+{ ══ Invoice data structure ════════════════════════════════════════════ }
 
       { The Invoice Window is a TDmxForm-descendant, so its template uses
 	is built by nested NewSItem() calls.  See function InvoiceForm(). }
@@ -228,8 +235,10 @@ const
 
 type
     TInvoiceRec		= RECORD
-	Co,Addr,City,Rep1,Rep2	: string[25];
-	ContactA,ContactB	: string[25];
+	//Co,Addr,City,Rep1,Rep2	: string[25];
+	//ContactA,ContactB	: string[25];
+	Co,Addr,City,Rep1,Rep2	: string;
+	ContactA,ContactB	: string;
 	Quantity		: integer;
 	Item			: (Registration, SiteLicense);
 	Price,Total		: TREALNUM;
@@ -241,10 +250,14 @@ type
 	TPversion		: TREALNUM;
 	 { List any programming tools/add-ins that you use... }
 	Tools,WhoSaid		: word;
-	BlaiseProd		: string[21];
-	SourceName		: string[14];
-	TPowerProd		: string[17];
-	Others			: array[0..4] of string[44];
+	//BlaiseProd		: string[21];
+	//SourceName		: string[14];
+	//TPowerProd		: string[17];
+	//Others			: array[0..4] of string[44];
+	BlaiseProd		: string;
+	SourceName		: string;
+	TPowerProd		: string;
+	Others			: array[0..4] of string;
     end;
 
 
@@ -291,8 +304,8 @@ type
 
     PMyStatusLine  = ^TMyStatusLine;
     TMyStatusLine  =  OBJECT(TStatusLine)
-      // function	Hint(AHelpCtx: word): String;  VIRTUAL;
-      function	Hint(AHelpCtx: word): Sw_String;  VIRTUAL;
+      function	Hint(AHelpCtx: word): ShortString;  VIRTUAL;
+      // function	Hint(AHelpCtx: word): Sw_String;  VIRTUAL;
     end;
 
 
@@ -329,11 +342,11 @@ var
   procedure InitializeData;  forward;  { for the sample data }
 
 
-  { ══ TMyStatusLine ═════════════════════════════════════════════════════ }
+{ ══ TMyStatusLine ═════════════════════════════════════════════════════ }
 
 
-// function  TMyStatusLine.Hint(AHelpCtx: word) : String;
-function  TMyStatusLine.Hint(AHelpCtx: word) : Sw_String;
+function  TMyStatusLine.Hint(AHelpCtx: word) : ShortString;
+// function  TMyStatusLine.Hint(AHelpCtx: word) : Sw_String;
 begin
   Case AHelpCtx of
     hcDragging:   Hint := #24#25#26#27' Move  Shift-'#24#25#26#27' Resize  '#17#196#217' Done  Esc Cancel';
@@ -473,7 +486,7 @@ begin
 end;
 
 
-  { ══ TDmxInvoice ═══════════════════════════════════════════════════════ }
+{ ══ TDmxInvoice ═══════════════════════════════════════════════════════ }
 
 
 procedure TDmxInvoice.EvaluateField;
@@ -533,7 +546,7 @@ begin
 end;
 
 
-  { ══ TDmxEditTbl ═══════════════════════════════════════════════════════ }
+{ ══ TDmxEditTbl ═══════════════════════════════════════════════════════ }
 
 
 function  TDmxEditTbl.GetHelpCtx : word;
@@ -590,7 +603,7 @@ begin
 end;
 
 
-  { ══ TDmxEditTblWin ════════════════════════════════════════════════════ }
+{ ══ TDmxEditTblWin ════════════════════════════════════════════════════ }
 
 
 procedure TDmxEditTblWin.InitDMX(ATemplate: string;  var AData;
@@ -614,7 +627,7 @@ begin
 end;
 
 
-  { ══ TDmxPayroll ═══════════════════════════════════════════════════════ }
+{ ══ TDmxPayroll ═══════════════════════════════════════════════════════ }
 
 
 procedure TDmxPayroll.EvaluateField;
@@ -651,9 +664,7 @@ begin
 end;
 
 
-  { ══ TMyApp ════════════════════════════════════════════════════════════ }
-
-
+{ ══ TMyApp ════════════════════════════════════════════════════════════ }
 constructor TMyApp.Init;
 begin
   TAppN.Init;
@@ -663,16 +674,15 @@ begin
   InitializeData;  { initialize the sample data }
 
   { Open the first 5 selections }
-  AccountWindow;
-  PayrollWindow;
-  BusyWindow;
-  HexWindow;
-  InvoiceFormWin;
+  //AccountWindow;
+  //PayrollWindow;
+  //BusyWindow;
+  //HexWindow;
+  //InvoiceFormWin;
 
   DeskTop^.SelectNext(FALSE);  { change back to account window }
 
-  Message(Application, evCommand, cmAbout, @Self);
-
+  // Message(Application, evCommand, cmAbout, @Self);
 end;
 
 
@@ -867,8 +877,9 @@ end;
 
 
 procedure TMyApp.AccountWindow;
-var  R	: TRect;
-     W	: PDmxWindow;
+var  
+  R: TRect;
+  W: PDmxWindow;
 begin
   AssignWinRect(R, length(AccountLabel) + 2, 0);
   W := New(PDmxEditTblWin, Init(R,	{ window rectangle }
@@ -1112,9 +1123,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
-
-
+{ ══════════════════════════════════════════════════════════════════════ }
 procedure InitializeData;
 { creates test data }
 var  i, j  : integer;
@@ -1125,24 +1134,24 @@ var  i, j  : integer;
     procedure InitAccount(ARecNum: integer; AName: string);
     begin
       With Accounts[ARecNum] do
-	begin
+      begin
 	Account	:= AName;
 	Debit	:= Random(50000) * 0.9;
 	Credit	:= Random(50000) * 0.9;
 	Status	:= (Credit > Debit);
-	end;
+      end;
     end;
 
     procedure InitBusyRec(ARecNum: integer; AName: string);
     var  i : integer;
     begin
       With BusyData[ARecNum] do
-	begin
-	Name	:= AName;
-	intfield0  := ARecNum;
-	hextwo	   := lo(ARecNum);
+      begin
+	Name := AName;
+	intfield0 := ARecNum;
+	hextwo := lo(ARecNum);
 	If ARecNum < 26 then
-	  begin
+	begin
 	  intfield1	:= random(255);
 	  ptrfield	:= pointer(random(MaxInt));
 	  realfield1	:= random(200) * random(200) / succ(random(199));
@@ -1154,31 +1163,33 @@ var  i, j  : integer;
 	  // DT.Min	:= random(60);
 	  // DT.Sec	:= random(60);
           DT := EncodeDate(1988 + random(4), succ(random(12)), succ(random(28))) + EncodeTime(random(24), random(60), random(60), 0);
-	  SSN[0]	:= #9;
-	  For i := 1 to 9 do SSN[i] := chr(random(10) + 48);
-	  end;
+	  // SSN[0]	:= #9;
+	  SSN	:= #9;
+	  For i := 1 to 9 do SSN := SSN + chr(random(10) + 48);
+          
 	end;
+      end;
     end;
 
     procedure InitPayroll(ARecNum: integer; AName: string);
     begin
       With Payroll[ARecNum] do
-	begin
+      begin
 	Employee :=  AName;
 	If (ARecNum = 0) then ID := 44 else ID := Random(400);
 	Earnings :=  Random(3000) + 4000.0;
 	FICA	 :=  Earnings * 0.075;
 	FITW	 :=  Earnings * 0.28;
 	SITW	 :=  Earnings * 0.05;
-	end;
+      end;
     end;
 
 begin
   RandSeed := 31;
-  fillchar(Accounts,   sizeof(Accounts),   0);
-  fillchar(Payroll,    sizeof(Payroll),	   0);
-  fillchar(BusyData,   sizeof(BusyData),   0);
-  fillchar(InvoiceRec, sizeof(InvoiceRec), 0);
+  //FillChar(Accounts,   sizeof(Accounts),   0);
+  //FillChar(Payroll,    sizeof(Payroll),	   0);
+  //FillChar(BusyData,   sizeof(BusyData),   0);
+  //FillChar(InvoiceRec, sizeof(InvoiceRec), 0);
 
   InitAccount( 0, 'ACME TOOL CO.');
   InitAccount( 1, 'READING R. R.');
@@ -1186,6 +1197,8 @@ begin
   InitAccount( 3, 'ELECTRIC CO.');
   InitAccount( 4, 'B&O R. R.');
   InitAccount( 5, 'NYNEX');
+  //for i := 0 to MaxRecordNum do
+  //  WriteLn(Format('Account: %s %f %f', [Accounts[i].Account, Accounts[i].Debit, Accounts[i].Credit]));
 
   InitBusyRec( 0, 'Abigail Adams');
   InitBusyRec( 1, 'Betty Boop');
@@ -1217,10 +1230,17 @@ begin
   For i := 26 to MaxRecordNum do InitBusyRec(i, '');
   BusyData[0].SSN  := '';
 
+  //for i := 0 to MaxRecordNum do
+  //  WriteLn(Format('BusyData: %s %s %f %f %d %d', [BusyData[i].Name, BusyData[i].SSN, BusyData[i].realfield1, BusyData[i].realfield2, BusyData[i].intfield0, BusyData[i].intfield1]));
+
+
   InitPayroll( 0, 'Alex Trebek');
   InitPayroll( 1, 'Pat Sajak');
   InitPayroll( 2, 'Vanna White');
   InitPayroll( 3, 'Merv Griffin');
+
+  //for i := 0 to MaxRecordNum do
+  //  WriteLn(Format('Payroll: %s %d %f %f %f %f', [Payroll[i].Employee, Payroll[i].ID, Payroll[i].Earnings, Payroll[i].FICA, Payroll[i].FITW, Payroll[i].SITW]));
 
   InvoiceRec.Quantity := 1;
   InvoiceRec.Price := UnitPrice;
@@ -1286,6 +1306,7 @@ Begin
   PrnOpt.Len	 :=  55;				{ rows per page }
   PrnOpt.Wid	 :=  80;				{ maximum page width }
 
+  // InitializeData;
   MyApp.Init;
   MyApp.Run;
   MyApp.Done;

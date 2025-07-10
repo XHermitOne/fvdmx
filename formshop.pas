@@ -55,8 +55,10 @@ const
 type
     TBusyData		=  RECORD  { same as TBusyData in SAMPLES.PAS }
 	Marker		:  byte;	{ HIDDEN field }
-	Name		:  string[30];
-	SSN		:  string[9];
+	//Name		:  string[30];
+	//SSN		:  string[9];
+	Name		:  string;
+	SSN		:  string;
 	realfield1	:  TREALNUM;
 	DT		:  datetime;
 	intfield0	:  integer;	{ READ-ONLY }
@@ -69,20 +71,27 @@ type
     PResponseRec	= ^TResponseRec;
     TResponseRec	=  RECORD
 	 { Programmer Information }
-	Name,Co,Addr	: string[42];
-	City		: string[16];
-	State		: string[12];
-	Zip,Country	: string[16];
+	//Name,Co,Addr	: string[42];
+	//City		: string[16];
+	//State		: string[12];
+	//Zip,Country	: string[16];
+	Name,Co,Addr	: string;
+	City		: string;
+	State		: string;
+	Zip,Country	: string;
 	 { How long have you been using Turbo Vision? }
 	Years,Months	: word;
 	 { Which version of Borland/Turbo Pascal are you using? }
 	TPxBP		: boolean;	TPversion	: TREALNUM;
 	 { List any programming tools/add-ins that you use... }
 	Tools		: word;
-	BlaiseProd	: string[40];
+	//BlaiseProd	: string[40];
+	BlaiseProd	: string;
 	PXEver		: TREALNUM;
-	TPowerProd	: string[36];
-	Others		: array[0..4] of string[48];
+	//TPowerProd	: string[36];
+	TPowerProd	: string;
+	//Others		: array[0..4] of string[48];
+	Others		: array[0..4] of string;
     end;
 
 

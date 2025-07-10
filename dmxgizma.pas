@@ -274,7 +274,7 @@ type
 implementation
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 function  InitAppendFields(ATemplate: pstring) : DmxIDstr;
@@ -400,7 +400,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 function  DmxStrLen(S: string) : integer;
@@ -470,7 +470,8 @@ begin
 	Inc(Len, DmxStrLen(pstring(@S[i+1])^));
 	Inc(i, sizeof(DmxIDstr) - 1);
 	end;
-      #0,'\','|','�','�':
+      // #0,'\','|','�','�':
+      #0,'\','|':
 	begin
 	ResetDelimiter(S[i] <> #0);
 	end;
@@ -497,7 +498,7 @@ begin
 end;
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 function  FieldString(fieldrec: pDMXfieldrec; Show: showset;  var DataRec ) : string;
@@ -536,15 +537,16 @@ var  i,j,Len	:  integer;
 	  If DataStr^[i] <> #0 then BlankField := FALSE;
     end;
 
-    function  CheckBlank(Zero: boolean) :  boolean;
+    function CheckBlank(Zero: boolean) :  boolean;
     begin
       If (Zero) and not ((fieldrec^.showzeroes) or (showanyway in Show)) then
 	begin
-	fillchar(A[1], Len, ' ');
-	// A[0]	   := chr(Len);
-	A[1]	   := chr(Len);
-	ItsBlank   := TRUE;
-	CheckBlank := TRUE;
+	  // fillchar(A[1], Len, ' ');
+	  FillChar(A, Len, ' ');
+	  // A[0]	   := chr(Len);
+	  A[1]	   := chr(Len);
+	  ItsBlank   := TRUE;
+	  CheckBlank := TRUE;
 	end
        else
 	CheckBlank := FALSE;
@@ -559,11 +561,11 @@ var  i,j,Len	:  integer;
 	Move(pstring(DataStr)^[6], w, sizeof(w));
 	If (w and $7FF0 = $7FF0) then
 	  begin
-	  fillchar(A[1], Len, ' ');
-  	  //A[0]	   := chr(Len);
-	  A[1]	   := chr(Len);
-	  ItsBlank := TRUE;
-	  CheckInfinity := TRUE;
+	    fillchar(A[1], Len, ' ');
+  	    //A[0]	   := chr(Len);
+	    A[1]	   := chr(Len);
+	    ItsBlank := TRUE;
+	    CheckInfinity := TRUE;
 	  end;
 	end;
     end;
@@ -614,7 +616,7 @@ begin
     begin
     If (fieldrec = nil) or (access and accHidden <> 0) then
       begin
-      FieldString := '';
+        FieldString := '';
       Exit;
       end;
     If (template = nil) or (columnwid = 0) then
@@ -624,16 +626,16 @@ begin
       end;
     If (upcase(typecode) = fldENUM) then
       begin
-      fillchar(T[1], columnwid, ' ');
-      // T[0] := chr(columnwid);
-      T[1] := chr(columnwid);
+        FillChar(T[1], columnwid, ' ');
+        // T[0] := chr(columnwid);
+        T[1] := chr(columnwid);
       end
-     else
-      T  := template^;
+    else
+       T  := template^;
     If (fieldsize = 0) then
       begin
-      FieldString := T;
-      Exit;
+        FieldString := T;
+        Exit;
       end;
     Data := ptr(seg(DataRec), ofs(DataRec) + datatab);
     Len  := truelen;
@@ -645,48 +647,48 @@ begin
 
       fldSTR, fldSTRNUM:			{ 'S'/'#' }
 	begin
-	If DataStr^ <> '' then
-	  For i := 1 to length(DataStr^) do
-	    If ord(DataStr^[i]) and $DF <> 0 then Q := TRUE;
-	If not CheckBlank(not Q) then
-	  begin
-	  fillchar(A[1], Len, ' ');
-	  Move(DataStr^[1], A[1], length(DataStr^));
-	  // A[0] := chr(Len);
-	  A[1] := chr(Len);
-	  end;
+	  If DataStr^ <> '' then
+	    For i := 1 to length(DataStr^) do
+	      If ord(DataStr^[i]) and $DF <> 0 then Q := TRUE;
+	  If not CheckBlank(not Q) then
+	    begin
+	      FillChar(A[1], Len, ' ');
+  	      Move(DataStr^[1], A[1], length(DataStr^));
+	      // A[0] := chr(Len);
+	      A[1] := chr(Len);
+	    end;
 	end;
 
       fldCHAR, fldCHARNUM:		{ 'C'/'0' }
 	begin
-	If Len > 0 then
-	  For i := 0 to pred(Len) do
-	    If ((ord(DataStr^[i]) and $DF) <> 0) then Q := TRUE;
-	If not CheckBlank(not Q) then
-	  begin
-	  Move(Data^, A[1], Len);
-	  // A[0] := chr(Len);
-	  A[1] := chr(Len);
-	  end;
+	  If Len > 0 then
+	    For i := 0 to pred(Len) do
+	      If ((ord(DataStr^[i]) and $DF) <> 0) then Q := TRUE;
+	  If not CheckBlank(not Q) then
+	    begin
+	      Move(Data^, A[1], Len);
+	      // A[0] := chr(Len);
+	      A[1] := chr(Len);
+	    end;
 	end;
 
       fldCHARVAL:			{ 'N' }
 	begin
-	// A[0] := chr(fieldsize);
-	A[1] := chr(fieldsize);
-	Move(Data^, A[1], fieldsize);
-	Val(A, R, i);
-	If i <> 0 then R := 0.0;
-	If not CheckBlank(R = 0.0) then
+	  // A[0] := chr(fieldsize);
+	  A[1] := chr(fieldsize);
+	  Move(Data^, A[1], fieldsize);
+	  Val(A, R, i);
+	  If i <> 0 then R := 0.0;
+	  If not CheckBlank(R = 0.0) then
 	  begin
-	  If decimals > 0 then
+	    If decimals > 0 then
 	    begin
-	    Str(R:(Len + 2):decimals, A);
-	    Delete(A,(Len + 2) - decimals, 1);
+	      Str(R:(Len + 2):decimals, A);
+	      Delete(A,(Len + 2) - decimals, 1);
 	    end
-	   else
-	    Str(R:(Len + 1):0, A);
-	  FormNum(R >= 0);
+	    else
+	      Str(R:(Len + 1):0, A);
+	    FormNum(R >= 0);
 	  end;
 	end;
 
@@ -876,7 +878,7 @@ begin
 end;  { FieldString() }
 
 
-  { ══════════════════════════════════════════════════════════════════════ }
+{ ══════════════════════════════════════════════════════════════════════ }
 
 
 

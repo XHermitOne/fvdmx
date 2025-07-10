@@ -14,8 +14,8 @@ rm -rf units
 rm *.res
 
 fpcmake
-#make
+make
 
 # ~/fpcupdeluxe/fpc/bin/x86_64-linux/fpcmake
-make FPC=~/fpcupdeluxe/fpc/bin/x86_64-linux/fpc
+#make FPC=~/fpcupdeluxe/fpc/bin/x86_64-linux/fpc
 

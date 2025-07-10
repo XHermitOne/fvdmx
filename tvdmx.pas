@@ -262,7 +262,7 @@ var	FirstField	: pDMXfieldrec;
 
 
 
-  { ══ TDmxLink ══════════════════════════════════════════════════════════ }
+{ ══ TDmxLink ══════════════════════════════════════════════════════════ }
 
 
 constructor TDmxLink.Init(var Bounds: TRect);
@@ -316,7 +316,7 @@ begin
 end;
 
 
-  { ══ TDmxExtLabels ═════════════════════════════════════════════════════ }
+{ ══ TDmxExtLabels ═════════════════════════════════════════════════════ }
 
 const  Clicked : PDmxLink = nil;
 
@@ -521,7 +521,7 @@ begin
 end;
 
 
-  { ══ TDmxLabels ════════════════════════════════════════════════════════ }
+{ ══ TDmxLabels ════════════════════════════════════════════════════════ }
 
 
 constructor TDmxLabels.Init(DataStr: pstring;	var Bounds: TRect);
@@ -550,7 +550,7 @@ begin
 end;
 
 
-  { ══ TDmxFLabels ═══════════════════════════════════════════════════════ }
+{ ══ TDmxFLabels ═══════════════════════════════════════════════════════ }
 
 
 constructor TDmxFLabels.Init(LabelStr: string;  var Bounds: TRect);
@@ -578,7 +578,7 @@ begin
 end;
 
 
-  { ══ TDmxMLabels ═══════════════════════════════════════════════════════ }
+{ ══ TDmxMLabels ═══════════════════════════════════════════════════════ }
 
 
 constructor TDmxMLabels.Init(Labels: PSItem;  var Bounds: TRect);
@@ -616,7 +616,7 @@ begin
 end;
 
 
-  { ══ TDmxScroller ══════════════════════════════════════════════════════ }
+{ ══ TDmxScroller ══════════════════════════════════════════════════════ }
 
 
 constructor TDmxScroller.Init(ATemplate: string;  var AData;
