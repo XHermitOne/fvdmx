@@ -9,7 +9,7 @@
 # Смена расширения у всех файлов по маске
 # rename 's/.PAS/.pas/' ./*.PAS
 
-rm samples
+rm samples1
 rm -rf units
 rm *.res
 

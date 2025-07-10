@@ -14,7 +14,7 @@
 Unit tvDMXCOL;
 
 // {$B-,O+,R-,V-,X+ }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 interface
 

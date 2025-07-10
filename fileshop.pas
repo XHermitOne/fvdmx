@@ -25,11 +25,11 @@ Program FILESHOP;
 
 //{$M 16384,8192,655360 }
 //{$B-,R-,X+,V- }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 uses  
     Objects, Drivers, Views, Menus, App, MsgBox,
-    RSet, DmxGizma, tvDMX, tvDMXBUF, tvGizma;
+    RSet, DmxGizma, tvDMX, tvDMXBUF, fvGizma;
 
 const
     xLabels	=  ' String Field            +Real         Real      Word   Seg : Ofs ';

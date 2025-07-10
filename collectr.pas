@@ -46,11 +46,11 @@ Program COLLECTR;
  *)
 
 // {$V-,X+,B-,R- }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 uses
     Objects, Drivers, Memory, Views, Menus, App, MsgBox,
-    RSet, DmxGizma, tvGizma, tvDMX, StdDMX, tvDMXCOL, tvDMXREP,
+    RSet, DmxGizma, fvGizma, tvDMX, StdDMX, tvDMXCOL, tvDMXREP,
     tvDMXBUF;
 
 const

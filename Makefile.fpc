@@ -1,10 +1,11 @@
 [target]
-programs=samples
+programs=samples1
 
 [compiler]
 #options=-k--no-relax
 #options=-k-shared
 #options=-va -k--no-relax -g
+options=-va -g
 #options=-k"-no-pie"
 #options=-k"-fuse-ld=gold"
 #unitdir=~/fpcupdeluxe/fv_utf8

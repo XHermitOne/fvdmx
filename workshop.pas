@@ -30,7 +30,7 @@ Program WORKSHOP;
 
 uses
     Objects, Drivers, Views, Menus, App,
-    RSet, DmxGizma, tvDMX, tvGizma, tvDMXREP;
+    RSet, DmxGizma, tvDMX, fvGizma, tvDMXREP;
 
 const
     xLabels	=  ' String Field            +Real         Real      Word   Seg : Ofs ';

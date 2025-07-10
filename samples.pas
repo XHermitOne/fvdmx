@@ -78,12 +78,12 @@ Program SAMPLES;
 
 uses
     // Dos, { required to define DateTime type }
-    Unix, 
+    // Unix, 
     SysUtils, // UnixUtil, Video,
     Crt, { required for Sound() procedure used by cmChime command }
     Objects, Drivers, Views, Menus, Dialogs, App, MsgBox,
     RSet, DmxGizma, tvGizma, tvDMX, StdDMX, tvDmxHex, tvDmxRep, DmxForms,
-    Avail,
+    //Avail,
     FVCommon;
 
 const

@@ -14,13 +14,14 @@
 Unit DMXFORMS;
 
 //{$B-,D+,O+,R-,V-,X+ }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 interface
 
 uses 
     Objects, Drivers, Memory, Views, Dialogs, Menus, App,
-    RSet, DmxGizma, tvDMX, Avail;
+    RSet, DmxGizma, tvDMX;
+    // , Avail;
 
 const
     { additional buttons and options for EntryBox }
@@ -120,6 +121,9 @@ const
 	Store:	  @TDmxDlgForm.Store
       );
 
+
+var
+  Mem: array [0..$7fffffff-1] of Byte;
 
 implementation
 
@@ -286,7 +290,7 @@ begin
 end;
 
 
-  { ══ TDmxForm ══════════════════════════════════════════════════════════ }
+{ ══ TDmxForm ══════════════════════════════════════════════════════════ }
 
 
 constructor TDmxForm.Init(ATemplates : PSItem;	AInScroll : boolean;
@@ -573,7 +577,8 @@ constructor TDmxDlgForm.Init(ATemplates : PSItem;
 			AHScrollBar,AVScrollBar : PScrollBar);
 begin
   // TDmxForm.Init(ATemplates, TRUE, Mem[0:0], Bounds, nil,nil, AHScrollBar, AVScrollBar);
-  TDmxForm.Init(ATemplates, TRUE, Avail.Mem[0], Bounds, nil, nil, AHScrollBar, AVScrollBar);
+  // TDmxForm.Init(ATemplates, TRUE, Avail.Mem[0], Bounds, nil, nil, AHScrollBar, AVScrollBar);
+  TDmxForm.Init(ATemplates, TRUE, Mem, Bounds, nil, nil, AHScrollBar, AVScrollBar);
   Options := Options or ofFirstClick;
 end;
 

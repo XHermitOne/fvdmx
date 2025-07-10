@@ -15,14 +15,14 @@ Program FORMSHOP;
 
 //{$M 16384,16384,655360}
 //{$V-,X+,D+,B-,R- }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 uses
     // Dos, 
     SysUtils,
     Crt,
     Objects, Drivers, Views, Dialogs, Menus, App, MsgBox,
-    RSet, DmxGizma, tvDMX, tvGizma, DmxForms, tvDmxRep;
+    RSet, DmxGizma, tvDMX, fvGizma, DmxForms, tvDmxRep;
 
 const
     cmEditWin	=  101;

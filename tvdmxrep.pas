@@ -14,7 +14,7 @@
 Unit tvDMXREP;
 
 // {$V-,X+,B-,R-,I- }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 interface
 
@@ -22,7 +22,7 @@ uses
     // Dos, 
     SysUtils,
     Objects, Drivers, Memory, Views, Dialogs, Menus, App, MsgBox,
-    RSet, DmxGizma, tvGizma, tvDMX, StdDMX;
+    RSet, DmxGizma, fvGizma, tvDMX, StdDMX;
 
 const
     NewLineStr	:  string[7] =	^M^J;

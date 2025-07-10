@@ -13,13 +13,13 @@
 Unit tvDMX;
 
 // {$B-,D+,O+,R-,V-,X+ }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 interface
 
 uses  
     Objects, Drivers, Views, Dialogs, App, 
-    RSet, DmxGizma, Avail;
+    RSet, DmxGizma; //, Avail;
 
 var
     DrawingRecNum  :  integer;
@@ -974,10 +974,10 @@ var
 	If (columnwid = 0) then columnwid := length(templx);
 	If (length(templx) > 0) or (template <> nil) then
 	  begin
-	  If (Avail.MaxAvail > length(templx)) then
-	    template  := NewStr(templx)
-	   else
-	    InitValid := FALSE;
+	  //If (Avail.MaxAvail > length(templx)) then
+	    template  := NewStr(templx);
+	  // else
+	  //  InitValid := FALSE;
 	  end
 	 else
 	  begin
@@ -988,18 +988,18 @@ var
       If access and accHidden = 0 then Limit.X := Limit.X + shownwid;
       end;
     templx := '';
-    If (Avail.MaxAvail > sizeof(Rex^)) then
-      begin
-      New(Rex^.Next);
-      X   := Rex;
-      Rex := Rex^.Next;
-      fillchar(Rex^, sizeof(Rex^), 0);
-      Rex^.Prev := X;
-      Rex^.Next := nil;
-      Rex^.showzeroes := AllZeroes;
-      end
-     else
-      InitValid := FALSE;
+    //If (Avail.MaxAvail > sizeof(Rex^)) then
+    //  begin
+    New(Rex^.Next);
+    X   := Rex;
+    Rex := Rex^.Next;
+    fillchar(Rex^, sizeof(Rex^), 0);
+    Rex^.Prev := X;
+    Rex^.Next := nil;
+    Rex^.showzeroes := AllZeroes;
+    //end
+    // else
+    //  InitValid := FALSE;
     WasSameNum := FALSE;
     NoFieldNum := FALSE;
     NoFieldAdv := FALSE;

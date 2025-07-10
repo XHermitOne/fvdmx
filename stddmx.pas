@@ -14,12 +14,12 @@
 Unit StdDMX;
 
 // {$B-,D+,O+,R-,X+,V- }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 interface
 
 uses  Objects, Drivers, Views, Dialogs, App, MsgBox,
-      RSet, tvGizma, DmxGizma, tvDMX;
+      RSet, fvGizma, DmxGizma, tvDMX;
 
 const	CDmxEditDlg	= #19#20#06#06#01#02; { similar to CInputLine }
 			 {  |  |  |  |	|  | }

@@ -14,7 +14,7 @@
 Unit DMXGIZMA;
 
 //{$V-,X+,O+,D+,B-,R- }
-{$mode objfpc}{$H+}
+//{$mode objfpc}{$H+}
 
 interface
 
