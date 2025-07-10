@@ -22,13 +22,13 @@ uses
     RSet, DmxGizma;
 
 
-const
-    BeepOn	   : boolean = TRUE;	{ allows beeping from cmBeep event }
+//const
+    //BeepOn	   : boolean = TRUE;	{ allows beeping from cmBeep event }
     //PreserveScreen : boolean = TRUE;	{ restore screen after done }
-    PreserveScreen : boolean = False;	{ restore screen after done }
+    //PreserveScreen : boolean = False;	{ restore screen after done }
 
-    SoundIndOn		= ' ON';	{ On & Off must be the same length }
-    SoundIndOff		= 'OFF';
+    //SoundIndOn		= ' ON';	{ On & Off must be the same length }
+    //SoundIndOff		= 'OFF';
 
 type
 

@@ -14,7 +14,7 @@ uses
   Menus,    // Statuszeile
   Dialogs, MsgBox,
   RSet, DmxGizma, DefaultDmx,
-  StdDMX, tvDMX,
+  FvStdDMX, fvDMX,
   fvGizma;
   //tvGizma, tvDMX, StdDMX, tvDmxHex, tvDmxRep, DmxForms;
 
@@ -446,7 +446,8 @@ end;
 
 { ══ TDmxEditTbl ═══════════════════════════════════════════════════════ }
 
-function  TDmxEditTbl.GetHelpCtx : word;
+
+function TDmxEditTbl.GetHelpCtx : word;
 begin
   If (CurrentField^.typecode = fldENUM) then
     GetHelpCtx := hcEnumField
@@ -468,7 +469,7 @@ begin
 	cmDialog,cmDMX_DoubleClick:
 	  Message(Application, evCommand, cmRecDialog, @Self);
 	cmHasDialog:
-	  begin end;  { just allow this event to clear }
+	  begin end;  	// just allow this event to clear 
        else	Exit;
 	end;
       ClearEvent(Event);
