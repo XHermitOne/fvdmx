@@ -4,19 +4,24 @@
 
 Program samples1;
 
+{$mode objfpc}{$H+}
+
 uses
   SysUtils, // UnixUtil, Video,
   //FVCommon,
   App,      // TApplication
-  Objects,  // Fensterbereich (TRect)
+  Objects,  // TRect
   Drivers,  // Hotkey
-  Views,    // Ereigniss (cmQuit)
-  Menus,    // Statuszeile
+  Views,    // cmQuit
+  Menus,    // StatusLine
   Dialogs, MsgBox,
   RSet, DmxGizma, DefaultDmx,
   FvStdDMX, fvDMX,
-  fvGizma;
+  fvGizma,
   //tvGizma, tvDMX, StdDMX, tvDmxHex, tvDmxRep, DmxForms;
+  DB, MemDS,
+  dbgfunc; // MemDataset
+
 
 const
     cmAbout	  =  101;
@@ -64,19 +69,21 @@ const
 { ══ Accounts template and data structure ══════════════════════════════ }
 
 const
+    // Заголовки табличной части
     //AccountLabel : string[80] =
     // ' Transaction          Debit        Credit      [?] ';
     AccountLabel : String =
 	' Transaction          Debit        Credit      [?] ';
 
+    // Шаблон вывода
     //AccountInfo  : string[80] =
 	//' SSSSSSSSSSSSSSSS`SSSSSSSSSS| rrr,rrr.zz  | rrr,rrr.zz  | [x] ';
     AccountInfo  : string =
-	' SSSSSSSSSSSSSSSS`SSSSSSSSSS| rrr,rrr.zz  | rrr,rrr.zz  | [x] ';
+	' SSSSSSSSSSSSSSSSSSSSSSSSSS| rrr,rrr.zz  | rrr,rrr.zz  | [x] ';
 
       { Note that the '`' character marks the end of the visible field. }
 
-type
+{type
     PAccount	  = ^TAccount;
     TAccount	  =  RECORD
 	//Account	:  string[26];
@@ -85,12 +92,15 @@ type
 	Credit	:  TREALNUM;
 	Status	:  boolean;
     end;
+}
 
 
 { ══ Payroll template and data structure ═══════════════════════════════ }
+{
 
-const { The last three fields are marked READ-ONLY, and are automatically
-	entered by the virtual methods in object TDmxPayroll. }
+const 
+    // The last three fields are marked READ-ONLY, and are automatically
+    // entered by the virtual methods in object TDmxPayroll. 
 
     PayrollLblA  = ' Employee                ID     Earnings       FICA        FITW        SITW   ';
     PayrollInfo  = ' ssssssssssssssssssssss| ZZW ║ $rr,rrr.zz | $r,rrr.zz '^R'| $r,rrr.zz '^R'| $r,rrr.zz '^R;
@@ -103,17 +113,19 @@ type
 	Employee :  string;
 	ID	 :  word;
 	Earnings :  TREALNUM;
-	FICA	 :  TREALNUM;  { READ-ONLY }
-	FITW	 :  TREALNUM;  { READ-ONLY }
-	SITW	 :  TREALNUM;  { READ-ONLY }
+	FICA	 :  TREALNUM;  // READ-ONLY 
+	FITW	 :  TREALNUM;  // READ-ONLY 
+	SITW	 :  TREALNUM;  // READ-ONLY 
     end;
+}
 
 
 { ══ Busy data structure ═══════════════════════════════════════════════ }
-
-const { The Busy Window's template uses many of the special options.  Since
-	it uses an enumerated field, the template is defined in the method
-	that instantiates these windows. }
+{
+const 
+  // The Busy Window's template uses many of the special options.  Since
+  // it uses an enumerated field, the template is defined in the method
+  // that instantiates these windows. 
 
     _BusyLabel	  =
 	' Name                  SSN             Balance      Start Date   Time   <A>  [B]   Pointer       Value     RO ';
@@ -124,7 +136,7 @@ const { The Busy Window's template uses many of the special options.  Since
 type
     PBusyData	  = ^TBusyData;
     TBusyData	  =  RECORD
-	Marker		:  byte;	{ HIDDEN field }
+	Marker		:  byte;	// HIDDEN field 
 	//Name		:  string[30];
 	Name		:  string;
 	//SSN		:  string[9];
@@ -132,24 +144,25 @@ type
 	realfield1	:  TREALNUM;
 	// DT		:  datetime;
 	DT		:  TDateTime;
-	intfield0	:  integer;	{ READ-ONLY }
+	intfield0	:  integer;	// READ-ONLY 
 	intfield1	:  integer;
 	ptrfield	:  pointer;
 	realfield2	:  TREALNUM;
-	hextwo		:  byte;	{ READ-ONLY }
+	hextwo		:  byte;	// READ-ONLY 
     end;
-
+}
 
 { ══ Invoice data structure ════════════════════════════════════════════ }
 
-      { The Invoice Window is a TDmxForm-descendant, so its template uses
-	is built by nested NewSItem() calls.  See function InvoiceForm(). }
+{
+// The Invoice Window is a TDmxForm-descendant, so its template uses
+//	is built by nested NewSItem() calls.  See function InvoiceForm(). 
 
 const
     UnitPrice	= 20.00;
     SitePrice	= 50.00;
 
-    { bit values for TInvoiceRec.Tools }
+    // bit values for TInvoiceRec.Tools 
     AnsiView	= $0001;
     Blaise	= $0002;
     Btrieve	= $0004;
@@ -176,11 +189,11 @@ type
 	Price,Total		: TREALNUM;
 	DiskType		: (disk3p5, disk5p25);
 	SendWhen		: (whenrx, whennextver);
-	 { How long have you been using Turbo Vision? }
+	// How long have you been using Turbo Vision? 
 	Years,Months		: word;
-	 { Which version of Borland Pascal are you using? }
+	// Which version of Borland Pascal are you using? 
 	TPversion		: TREALNUM;
-	 { List any programming tools/add-ins that you use... }
+	// List any programming tools/add-ins that you use... 
 	Tools,WhoSaid		: word;
 	//BlaiseProd		: string[21];
 	//SourceName		: string[14];
@@ -191,7 +204,7 @@ type
 	TPowerProd		: string;
 	Others			: array[0..4] of string;
     end;
-
+}
 
 { ══════════════════════════════════════════════════════════════════════ }
 type
@@ -217,7 +230,7 @@ type
 
 
     TDmxEditTblWin  =  OBJECT(TDmxWindow)
-      procedure InitDMX(ATemplate: String;  var AData;
+      procedure InitDMX(ATemplate: String; ADataSource: TDataSource;
 			ALabels,ARecInd: PDmxLink;
 			BSize: longint);  VIRTUAL;
     end;
@@ -241,13 +254,15 @@ type
 
 type
   TMyApp = object(TApplication)
-
+        FWinCounter: Integer;
       constructor Init;
+      destructor Done; virtual; 
+
       //procedure Idle;  VIRTUAL;
       procedure HandleEvent(var Event: TEvent);  VIRTUAL;
       procedure InitMenuBar;	 VIRTUAL;
       procedure InitStatusLine;  VIRTUAL;
-      procedure AccountWindow;
+      //procedure AccountWindow;
       //procedure PayrollWindow;
       //procedure BusyWindow;
       //procedure HexWindow;
@@ -256,25 +271,32 @@ type
       //procedure PayrollDialog(P: PDmxPayroll);
       //procedure BusyDialog(P: PDmxEditTbl);
 
+      procedure InitializeDataset;
 end;
 
 const
     MaxRecordNum  =   49;
 
 { ══════════════════════════════════════════════════════════════════════ }
-var
+{var
     Accounts	:  array[0..MaxRecordNum] of TAccount;
     Payroll	:  array[0..MaxRecordNum] of TPayroll;
     BusyData	:  array[0..MaxRecordNum] of TBusyData;
     InvoiceRec	:  TInvoiceRec;
+}
 
 
-  procedure InitializeData;  forward;  { for the sample data }
+//procedure InitializeData;  forward;  { for the sample data }
+// procedure InitializeDataset; forward;  { for the sample data }
 
+
+var  
+  AccountDataset: TMemDataset;
 
 { ══════════════════════════════════════════════════════════════════════ }
+{
 procedure InitializeData;
-{ creates test data }
+// creates test data 
 var  i, j  : integer;
      // F	  : SearchRec;
      F	  : TSearchRec;
@@ -395,21 +417,9 @@ begin
   InvoiceRec.Price := UnitPrice;
   InvoiceRec.Total := UnitPrice;
 
-  {$IFDEF VER60 }
-  InvoiceRec.TPversion := 6.0;
-  {$ELSE }
   InvoiceRec.Tools  := InvoiceRec.Tools or TPW;
-  {$ENDIF }
 
-  {$IFDEF VER70 }
-  InvoiceRec.TPversion := 7.0;
-  {$ENDIF }
-  {$IFDEF VER75 }
-  InvoiceRec.TPversion := 7.5;
-  {$ENDIF }
-  {$IFDEF VER80 }
   InvoiceRec.TPversion := 8.0;
-  {$ENDIF }
 
   // FindFirst('\TVDT', Directory, F);
   find_error := FindFirst('\TVDT', faDirectory, F);
@@ -441,7 +451,7 @@ begin
     end;
 
 end;
-
+}
 
 
 { ══ TDmxEditTbl ═══════════════════════════════════════════════════════ }
@@ -503,8 +513,7 @@ end;
 
 { ══ TDmxEditTblWin ════════════════════════════════════════════════════ }
 
-
-procedure TDmxEditTblWin.InitDMX(ATemplate: String;  var AData;
+procedure TDmxEditTblWin.InitDMX(ATemplate: String; ADataSource: TDataSource;
 				  ALabels,ARecInd: PDmxLink;
 				  BSize: longint);
 { To override TDmxEditor (as does object TDmxEditTbl above), you could
@@ -512,12 +521,13 @@ procedure TDmxEditTblWin.InitDMX(ATemplate: String;  var AData;
   type is used for the "Accounts" and "Busy" windows.  (The "Payroll"
   window uses a regular TWindow type.)
  }
-var  R	: TRect;
+var  
+  R: TRect;
 begin
   GetExtent(R);
   R.Grow(-1,-1);
   If ALabels <> nil then Inc(R.A.Y, ALabels^.Size.Y);
-  DMX := New(PDmxEditTbl, Init(ATemplate, AData, BSize, R,
+  DMX := New(PDmxEditTbl, Init(ATemplate, ADataSource, BSize, R,
 		ALabels, ARecInd,
 		StandardScrollBar(sbHorizontal),
 		StandardScrollBar(sbVertical)));
@@ -573,14 +583,18 @@ end;
 constructor TMyApp.Init;
 begin
   //TAppN.Init;
-  TApplication.Init;
+  // TApplication.Init;
+  inherited Init;
+  FWinCounter := 0;
+
   MenuBar^.HelpCtx := hcMenus;
   DeskTop^.HelpCtx := hcDeskTop;
   // hcEntryBox	   := hcDialogs;
-  InitializeData;  { initialize the sample data }
+  //InitializeData;  { initialize the sample data }
+  InitializeDataset;  { initialize the sample data }
 
   { Open the first 5 selections }
-  AccountWindow;
+  //AccountWindow;
   //PayrollWindow;
   //BusyWindow;
   //HexWindow;
@@ -588,7 +602,16 @@ begin
 
   // DeskTop^.SelectNext(FALSE);  { change back to account window }
 
-  Message(Application, evCommand, cmAbout, @Self);
+  //Message(Application, evCommand, cmAbout, @Self);
+end;
+
+
+destructor TMyApp.Done;
+begin
+  // 6. Освобождаем память
+  AccountDataset.Free;
+  
+  inherited Done;
 end;
 
 
@@ -776,27 +799,116 @@ begin
 end;
 
 
+{
 procedure TMyApp.AccountWindow;
 var  
   R: TRect;
   W: PDmxWindow;
+
+  //window_number: Integer;
+  template: String;
+  //records: Pointer;
+  records_size: Integer;
+  labels: String;
 begin
-  AssignWinRect(R, length(AccountLabel) + 2, 0);
+  R.Assign(0, 0, 60, 20);
+  Inc(FWinCounter);
+
+  // AssignWinRect(R, length(AccountLabel) + 2, 0);
+
   // WriteLn(Format('Rect: [%d, %d, %d, %d]', [R.A.X, R.A.Y, R.B.X, R.B.Y]));
-  W := New(PDmxEditTblWin, Init(R,	{ window rectangle }
-		'Accounts',		{ window title }
-		wnNextAvail,		{ window number }
-		AccountInfo,		{ template string }
-		Accounts,		{ data records }
-		sizeof(Accounts),	{ data size }
-		AccountLabel,		{ heading label }
-		7));			{ indicator width }
+  // window_number := wnNextAvail;
+  template := AccountInfo;
+  // records := Accounts;
+  // records_size := sizeof(Accounts);
+  labels := AccountLabel;
+
+  W := New(PDmxEditTblWin, Init(R,	// window rectangle 
+		'Accounts',		// window title 
+		FWinCounter,		// window number 
+		template,		// template string 
+		nil,		 	// data records 
+		0,			// data size 
+		labels,			// heading label 
+		7));			// indicator width 
   W^.HelpCtx := hcAccWin;
-  DeskTop^.Insert(ValidView(W));
+
+  if ValidView(W) <> nil then begin
+    Desktop^.Insert(W);
+  end else begin
+    Dec(FWinCounter);
+  end;
+
+  // DeskTop^.Insert(ValidView(W));
+end;
+}
+
+procedure TMyApp.InitializeDataset;
+var  
+  // i  : integer;
+  credit, debit: Real;
+begin
+  // 1. Создаем TMemDataset
+  AccountDataset := TMemDataset.Create(nil);
+
+  // 2. Определяем структуру таблицы (поля)
+  AccountDataset.FieldDefs.BeginUpdate; 
+  with AccountDataset.FieldDefs do
+  begin
+    Add('ID', ftAutoInc);      // Автоинкрементное поле
+    Add('Name', ftString, 50); // Строковое поле (макс. длина 50)
+    // Add('', ftInteger);     // Числовое поле
+    Add('Debit', ftFloat);    // Поле с плавающей запятой
+    Add('Credit', ftFloat);    // Поле с плавающей запятой
+    Add('Status', ftBoolean);  // Логическое поле
+  end;
+  AccountDataset.FieldDefs.EndUpdate;
+
+  // 3. Создаем таблицу в памяти
+  AccountDataset.Open;  
+
+  // 4. Заполняем данными
+  AccountDataset.Append;
+  AccountDataset.FieldByName('Name').AsString := 'ACME TOOL CO.';
+  credit := Random(50000) * 0.9;
+  debit := Random(50000) * 0.9;
+  AccountDataset.FieldByName('Debit').AsFloat := debit;
+  AccountDataset.FieldByName('Credit').AsFloat := credit;
+  AccountDataset.FieldByName('Status').AsBoolean := (credit > debit);
+  AccountDataset.Post;
+
+  AccountDataset.Append;
+  AccountDataset.FieldByName('Name').AsString := 'READING R. R.';
+  credit := Random(50000) * 0.9;
+  debit := Random(50000) * 0.9;
+  AccountDataset.FieldByName('Debit').AsFloat := debit;
+  AccountDataset.FieldByName('Credit').AsFloat := credit;
+  AccountDataset.FieldByName('Status').AsBoolean := (credit > debit);
+  AccountDataset.Post;
+
+  AccountDataset.Append;
+  AccountDataset.FieldByName('Name').AsString := 'EXXON CORP.';
+  credit := Random(50000) * 0.9;
+  debit := Random(50000) * 0.9;
+  AccountDataset.FieldByName('Debit').AsFloat := debit;
+  AccountDataset.FieldByName('Credit').AsFloat := credit;
+  AccountDataset.FieldByName('Status').AsBoolean := (credit > debit);
+  AccountDataset.Post;
+
+  AccountDataset.Append;
+  AccountDataset.FieldByName('Name').AsString := 'ELECTRIC CO.';
+  credit := Random(50000) * 0.9;
+  debit := Random(50000) * 0.9;
+  AccountDataset.FieldByName('Debit').AsFloat := debit;
+  AccountDataset.FieldByName('Credit').AsFloat := credit;
+  AccountDataset.FieldByName('Status').AsBoolean := (credit > debit);
+  AccountDataset.Post;
+
 end;
 
 
 var  
+  //AccountDataset: TMemDataset;
   MyApp  : TMyApp;
 
 begin
@@ -808,8 +920,12 @@ begin
   //PrnOpt.Wid	 :=  80;				{ maximum page width }
 
   // InitializeData;
-  MyApp.Init;
-  MyApp.Run;
-  MyApp.Done;
+  try
+    MyApp.Init;
+    MyApp.Run;
+    MyApp.Done;
+  except
+    dbgfunc.FatalMsg('Ошибка выполнения программы');
+  end;
 end.
 

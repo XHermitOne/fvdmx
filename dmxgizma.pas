@@ -19,9 +19,10 @@ Unit DMXGIZMA;
 interface
 
 uses  
-    SysUtils, 
-    Objects, Drivers, Views, Dialogs, App, 
-    RSet;
+  SysUtils, 
+  Objects, Drivers, Views, Dialogs, App, 
+  RSet,
+  DB;
 
 {$DEFINE tvDMX2A }
 
@@ -209,7 +210,7 @@ const
 type
     pDMXfieldrec = ^tDMXfieldrec;
     tDMXfieldrec =  RECORD    { these records describe each field for tvDMX }
-	Next,Prev	:  pDMXfieldrec;
+	Next, Prev	:  pDMXfieldrec;
 	access		:  byte;	{ read-only, hidden, skip, accSpecX }
 	fieldnum	:  byte;	{ 1..totalfields (0=none) }
 	screentab	:  integer;	{ virtual column num. }
@@ -266,8 +267,7 @@ type
   function  DmxStrLen(S: string)  : integer;
     { returns the length of the visible portions of a tvDMX template string }
 
-  function  FieldString(fieldrec: pDMXfieldrec;
-			Show: showset;  var DataRec )  : string;
+  function FieldString(fieldrec: pDMXfieldrec; Show: showset; ADataSet: TDataSet): string;
     { returns a display string from a tvDMX field record }
 
 
@@ -500,8 +500,7 @@ end;
 
 { ══════════════════════════════════════════════════════════════════════ }
 
-
-function  FieldString(fieldrec: pDMXfieldrec; Show: showset;  var DataRec ) : string;
+function  FieldString(fieldrec: pDMXfieldrec; Show: showset; ADataSet: TDataSet) : string;
 var  i,j,Len	:  integer;
      C		:  char;
      Numbers	:  boolean;
@@ -512,15 +511,15 @@ var  i,j,Len	:  integer;
      R		:  TREALNUM;
      Items	:  PSItem;
 
-     Data	:  pointer;
-     DataBool	:  pboolean	absolute Data;
-     DataByte	:  pbyte	absolute Data;
-     DataShort	:  pshortint	absolute Data;
-     DataInt	:  pinteger	absolute Data;
-     DataWord	:  pword	absolute Data;
-     DataLong	:  plongint	absolute Data;
-     DataReal	:  PREALNUM	absolute Data;
-     DataStr	:  pstring	absolute Data;
+     // Data	:  pointer;
+     DataBool	:  boolean;
+     DataByte	:  byte;
+     DataShort	:  shortint;
+     DataInt	:  integer;
+     DataWord	:  word;
+     DataLong	:  longint;
+     DataReal	:  real;
+     DataStr	:  string;
 
     function  HexByte(Number: byte)  : string;
     const bts  : array[0..15] of char = '0123456789ABCDEF';
@@ -534,7 +533,7 @@ var  i,j,Len	:  integer;
       BlankField := TRUE;
       If Len > 0 then
 	For i := 0 to pred(fieldrec^.fieldsize) do
-	  If DataStr^[i] <> #0 then BlankField := FALSE;
+	  If DataStr[i] <> #0 then BlankField := FALSE;
     end;
 
     function CheckBlank(Zero: boolean) :  boolean;
@@ -558,7 +557,7 @@ var  i,j,Len	:  integer;
       CheckInfinity := FALSE;
       If (sizeof(TREALNUM) = sizeof(Double)) then
 	begin
-	Move(pstring(DataStr)^[6], w, sizeof(w));
+	Move(DataStr[6], w, sizeof(w));
 	If (w and $7FF0 = $7FF0) then
 	  begin
 	    fillchar(A[1], Len, ' ');
@@ -571,7 +570,7 @@ var  i,j,Len	:  integer;
     end;
 
     procedure FormNum(sign: boolean);
-    { length of A[] must equal Len + 1 }
+    // length of A[] must equal Len + 1 
     var  i,j : integer;
 	 cc  : char;
     begin
@@ -637,7 +636,10 @@ begin
         FieldString := T;
         Exit;
       end;
-    Data := ptr(seg(DataRec), ofs(DataRec) + datatab);
+
+    // Data := ptr(seg(DataRec), ofs(DataRec) + datatab);
+    //ADataSet.Fields[fieldrec^.datatab];
+
     Len  := truelen;
     Numbers  := FALSE;
     ItsBlank := FALSE;
@@ -645,34 +647,37 @@ begin
     C	 := upcase(typecode);
     Case C of
 
-      fldSTR, fldSTRNUM:			{ 'S'/'#' }
+      fldSTR, fldSTRNUM:			// 'S'/'#' 
 	begin
-	  If DataStr^ <> '' then
-	    For i := 1 to length(DataStr^) do
-	      If ord(DataStr^[i]) and $DF <> 0 then Q := TRUE;
+	  DataStr := ADataSet.Fields[fieldrec^.datatab].AsString; 
+	  If DataStr <> '' then
+	    For i := 1 to length(DataStr) do
+	      If ord(DataStr[i]) and $DF <> 0 then Q := TRUE;
 	  If not CheckBlank(not Q) then
 	    begin
 	      FillChar(A[1], Len, ' ');
-  	      Move(DataStr^[1], A[1], length(DataStr^));
+  	      Move(DataStr[1], A[1], length(DataStr));
 	      // A[0] := chr(Len);
 	      A[1] := chr(Len);
 	    end;
 	end;
 
-      fldCHAR, fldCHARNUM:		{ 'C'/'0' }
+{
+      fldCHAR, fldCHARNUM:		// 'C'/'0' 
 	begin
+	  DataStr := ADataSet.Fields[fieldrec^.datatab].AsString; 
 	  If Len > 0 then
 	    For i := 0 to pred(Len) do
 	      If ((ord(DataStr^[i]) and $DF) <> 0) then Q := TRUE;
 	  If not CheckBlank(not Q) then
 	    begin
-	      Move(Data^, A[1], Len);
+	      Move(DataStr^, A[1], Len);
 	      // A[0] := chr(Len);
 	      A[1] := chr(Len);
 	    end;
 	end;
 
-      fldCHARVAL:			{ 'N' }
+      fldCHARVAL:			// 'N' 
 	begin
 	  // A[0] := chr(fieldsize);
 	  A[1] := chr(fieldsize);
@@ -691,73 +696,92 @@ begin
 	    FormNum(R >= 0);
 	  end;
 	end;
-
-      fldBYTE:				{ 'B' }
-	If not CheckBlank(DataByte^ = 0) then
+}
+{
+      fldBYTE:				// 'B' 
+      begin 
+	DataByte := ADataSet.Fields[fieldrec^.datatab].AsChar;
+	If not CheckBlank(DataByte = 0) then
 	  begin
-	  Str(DataByte^:(Len + 1), A);
+	  Str(DataByte:(Len + 1), A);
 	  FormNum(TRUE);
 	  end;
+      end;
 
-      fldSHORTINT:			{ 'J' }
-	If not CheckBlank(DataShort^ = 0) then
+      fldSHORTINT:			// 'J' 
+      begin
+	DataShort := ADataSet.Fields[fieldrec^.datatab].AsShortInt;
+	If not CheckBlank(DataShort = 0) then
 	  begin
-	  Str(DataShort^:(Len + 1), A);
-	  FormNum(DataShort^ >= 0);
+	  Str(DataShort:(Len + 1), A);
+	  FormNum(DataShort >= 0);
 	  end;
-
-      fldWORD:				{ 'W' }
-	If not CheckBlank(DataWord^ = 0) then
+      end;
+}
+{
+      fldWORD:				// 'W' 
+      begin
+        DataWord := ADataSet.Fields[fieldrec^.datatab].AsWord;
+	If not CheckBlank(DataWord = 0) then
 	  begin
-	  Str(DataWord^:(Len + 1), A);
+	  Str(DataWord:(Len + 1), A);
 	  FormNum(TRUE);
 	  end;
-
-      fldINTEGER:			{ 'I' }
-	If not CheckBlank(DataInt^ = 0) then
+      end;
+}
+      fldINTEGER:			// 'I' 
+      begin
+        DataInt := ADataSet.Fields[fieldrec^.datatab].AsInteger;
+	If not CheckBlank(DataInt = 0) then
 	  begin
-	  Str(DataInt^:(Len + 1), A);
-	  FormNum(DataInt^ >= 0);
+	  Str(DataInt:(Len + 1), A);
+	  FormNum(DataInt >= 0);
 	  end;
+      end;
 
-      fldLONGINT:			{ 'L' }
-	If not CheckBlank(DataLong^ = 0) then
+      fldLONGINT:			// 'L' 
+      begin
+        DataLong := ADataSet.Fields[fieldrec^.datatab].AsLongInt;
+	If not CheckBlank(DataLong = 0) then
 	  begin
-	  Str(DataLong^:(Len + 1), A);
-	  FormNum(DataLong^ >= 0);
+	  Str(DataLong:(Len + 1), A);
+	  FormNum(DataLong >= 0);
 	  end;
+      end;
 
-      fldREALNUM:			{ 'R' }
-	begin
-	If not CheckInfinity and not CheckBlank(DataReal^ = 0.0) then
+      fldREALNUM:			// 'R' 
+      begin
+        DataReal := ADataSet.Fields[fieldrec^.datatab].AsFloat;   
+	If not CheckInfinity and not CheckBlank(DataReal = 0.0) then
 	  begin
 	  If decimals > 0 then
 	    begin
-	    Str(DataReal^:(Len + 2):decimals, A);
-	    Delete(A,(Len + 2) - decimals, 1);
+	    Str(DataReal:(Len + 2):decimals, A);
+	    Delete(A, (Len + 2) - decimals, 1);
 	    end
 	   else
-	    Str(DataReal^:(Len + 1):0, A);
-	  If (abs(DataReal^) > 1e35) then
+	    Str(DataReal:(Len + 1):0, A);
+	  If (abs(DataReal) > 1e35) then
 	    begin
 	    A := '**********************************';
-	    If (DataReal^ < 0.0) then A[1] := '-';
+	    If (DataReal < 0.0) then A[1] := '-';
 	    end;
-	  FormNum(DataReal^ >= 0);
+	  FormNum(DataReal >= 0);
 	  end;
-	end;
+      end;
 
-      fldBOOLEAN:			{ 'X' }
-	begin
+      fldBOOLEAN:			// 'X' 
+      begin
+        DataBool := ADataSet.Fields[fieldrec^.datatab].AsBoolean;   
 	If (Len = 0) then
 	  begin
-	  If DataBool^ then A := '' else ItsBlank := TRUE;
+	  If DataBool then A := '' else ItsBlank := TRUE;
 	  end
 	 else
 	  begin
-	  If not CheckBlank(not DataBool^) then
+	  If not CheckBlank(not DataBool) then
 	    begin
-	    If DataBool^ then
+	    If DataBool then
 	      fillchar(A[1], Len, showTRUE)
 	     else
 	      fillchar(A[1], Len, showFALSE);
@@ -765,22 +789,28 @@ begin
 	    A[1] := chr(Len);
 	    end;
 	  end;
-	end;
+      end;
 
-      fldHEXVALUE:			{ 'H' }
+      fldHEXVALUE:			// 'H' 
+      begin
+        DataStr := ADataSet.Fields[fieldrec^.datatab].AsString; 
 	If not CheckBlank(BlankField) then
 	  begin
 	  A  := '';
-	  For i := 0 to pred(fieldsize) do A := hexbyte(ord(DataStr^[i])) + A;
+	  For i := 0 to pred(fieldsize) do A := hexbyte(ord(DataStr[i])) + A;
 	  If (length(A) > Len) then Delete(A, 1,1);
 	  end;
+      end;
 
-      fldENUM:				{ ^P  }
-	If not CheckBlank(DataByte^ = 0) then
+{
+      fldENUM:				// ^P  
+      begin
+        DataByte := ADataSet.Fields[fieldrec^.datatab].AsString; 
+	If not CheckBlank(DataByte = 0) then
 	  begin
 	  A  := '';
 	  Items := PSItem(template);
-	  i	:= DataByte^;
+	  i	:= DataByte;
 	  While (i > 0) do
 	    begin
 	    Dec(i);
@@ -791,15 +821,18 @@ begin
 	    Move(Items^.Value^[1], T[1], length(Items^.Value^));
 	    end;
 	  end;
+      end;
+}
 
-      fldCLUSTER:			{ 'K' }
+{
+      fldCLUSTER:			// 'K' 
 	begin
 	L := 0;
 	If (sizeof(L) > fieldsize) then
 	  Move(Data^, L, fieldsize)
 	 else
 	  Move(Data^, L, sizeof(L));
-	If (typecode >= 'a') then  { RadioButton }
+	If (typecode >= 'a') then  // RadioButton 
 	  begin
 	  If (L = decimals) then
 	    fillchar(A[1], Len, showRadioBtn)
@@ -818,8 +851,9 @@ begin
 	  A[1] := chr(Len);
 	  end;
 	end;
+}
 
-      end;  { case of C }
+      end;  // case of C 
 
     If ItsBlank then
       begin
@@ -875,7 +909,8 @@ begin
   CurrentCurPos := 0;
   FieldString := T;
 
-end;  { FieldString() }
+end;  // FieldString() 
+
 
 
 { ══════════════════════════════════════════════════════════════════════ }

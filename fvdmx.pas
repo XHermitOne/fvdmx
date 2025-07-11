@@ -18,20 +18,21 @@ unit fvDMX;
 interface
 
 uses  
-    Objects, Drivers, Views, Dialogs, App, 
-    RSet, DmxGizma; 
+  Objects, Drivers, Views, Dialogs, App, 
+  RSet, DmxGizma,
+  DB; 
 
 var
-    DrawingRecNum  :  integer;
+    DrawingRecNo  :  integer;
 
 type
     PDmxLink	   = ^TDmxLink;
-    //PDmxLabels	   = ^TDmxLabels;
-    //PDmxExtLabels  = ^TDmxExtLabels;
+    PDmxLabels	   = ^TDmxLabels;
+    PDmxExtLabels  = ^TDmxExtLabels;
     //PDmxFLabels    = ^TDmxFLabels;
     //PDmxMLabels    = ^TDmxMLabels;
     PDmxScroller   = ^TDmxScroller;
-    //PDmxRecInd	   = ^TDmxRecInd;
+    PDmxRecInd	   = ^TDmxRecInd;
     PDmxEditor	   = ^TDmxEditor;
 
     TDmxLink	=  OBJECT(TView)
@@ -44,9 +45,32 @@ type
       procedure SetState(AState: word;  Enable: boolean);  VIRTUAL;
     end;
 
+    TDmxExtLabels  =  OBJECT(TDmxLink)
+	Len	: integer;
+	Data	: PCharArray;
+	Heaped	: boolean;
+	DblBar	: boolean;
+      constructor Init(ALen: integer; AData: PCharArray; var Bounds: TRect);
+      constructor InitInsert(AOwner: PGroup; ALen: integer; AData: PCharArray);
+      destructor  Done;  VIRTUAL;
+      constructor Load(var S: TStream);
+      procedure Store(var S: TStream);
+      procedure Draw;  VIRTUAL;
+      procedure DrawRuler(Upper, AtLimit: boolean);
+      procedure HandleEvent(var Event: TEvent);  VIRTUAL;
+      procedure SetState(AState: word;  Enable: boolean);  VIRTUAL;
+    end;
+
+
+    TDmxLabels	=  OBJECT(TDmxExtLabels)
+      constructor Init(DataStr: pstring; var Bounds: TRect);
+      constructor InitInsert(AOwner: PGroup;  DataStr: pstring);
+    end;
+
     TDmxScroller =  OBJECT(TScroller)
 	Labels		: PDmxLink;
-	WorkingData	: pointer;
+	//WorkingData	: pointer;
+        WorkingDataSource: TDataSource;
 	ActualRecordNum	: longint;
 	DataBlockSize	: longint;
 	BaseRecord	: longint;
@@ -58,30 +82,30 @@ type
 	RecordSize	: integer;
 	Locked		: boolean;
 	InitValid	: boolean;
-      constructor Init(ATemplate: string; var AData; BSize: longint;
-		var Bounds: TRect;  ALabels: PView;  AHScrollBar,AVScrollBar: PScrollBar);
-      procedure   InitStruct(var ATemplate );  VIRTUAL;
-      procedure   InitData(var AData );  VIRTUAL;
+      constructor Init(ATemplate: string; ADataSource: TDataSource; BSize: longint;
+		       var Bounds: TRect;  ALabels: PView;  AHScrollBar,AVScrollBar: PScrollBar);
+      procedure   InitStruct(var ATemplate);  VIRTUAL;
+      procedure   InitData(ADataSource: TDataSource);  VIRTUAL;
       destructor  Done;  VIRTUAL;
       constructor Load(var S: TStream);
       procedure Store(var S: TStream);
       procedure ChangeBounds(var Bounds: TRect);  VIRTUAL;
-      function	DataAt(RecNum: integer) : pointer;  VIRTUAL;
+      function	RecordAt(RecNo: integer) : TDataSet;  VIRTUAL;
       procedure DoneData;  VIRTUAL;
       procedure DoneStruct;  VIRTUAL;
       procedure Draw;  VIRTUAL;
-      procedure DrawRecord(Y: integer;  var DataRecord );
-      procedure FieldText(var S: string;  var Color: word;
-			  Field: pDMXfieldrec;  var DataRec );  VIRTUAL;
-      procedure GetData(var Rec );  VIRTUAL;
+      procedure DrawRecord(Y: integer;  ADataSet: TDataSet);
+//      procedure FieldText(var S: string;  var Color: word;
+//			  Field: pDMXfieldrec; ADataSet: TDataSet);  VIRTUAL;
+//      procedure GetData(var Rec );  VIRTUAL;
       function	GetPalette  : PPalette;  VIRTUAL;
       procedure HandleEvent(var Event: TEvent);  VIRTUAL;
       procedure LoadData(var S: TStream);  VIRTUAL;
       procedure LoadStruct(var S: TStream);  VIRTUAL;
-      function	RecNumStr(RecNum: integer) : string;  VIRTUAL;
+      function	RecNoStr(RecNo: integer) : string;  VIRTUAL;
       function	RecordLimit : longint;	VIRTUAL;
       procedure ScrollDraw;  VIRTUAL;
-      procedure SetData(var Rec );  VIRTUAL;
+//      procedure SetData(var Rec );  VIRTUAL;
       procedure SetState(AState: word;  Enable: boolean);  VIRTUAL;
       procedure StoreData(var S: TStream);  VIRTUAL;
       procedure StoreStruct(var S: TStream);  VIRTUAL;
@@ -93,10 +117,18 @@ type
 	FirstRow	: integer;
     end;
 
+    TDmxRecInd	 =  OBJECT(TDmxLink)
+      constructor Init(var Bounds: TRect;  Len: integer);
+      constructor InitInsert(AOwner: PGroup; Len: integer);
+      procedure Draw;  VIRTUAL;
+      procedure SetState(AState: word; Enable: boolean);  VIRTUAL;
+      procedure HandleEvent(var Event: TEvent);  VIRTUAL;
+    end;
+
     TDmxEditor	 =  OBJECT(TDmxScroller)
 	RecInd		: PDmxLink;
-	FieldData	: pointer;
-	RecordData	: pointer;
+	// FieldData	: pointer;
+	// RecordData	: pointer;
 	CurPos		: integer;
 	Vidis		: boolean;
 	DoubleValid	: boolean;
@@ -112,7 +144,7 @@ type
 	RecWasLocked	: boolean;
 	LockChecked	: boolean;
 	ShowFmt		: showset;
-      constructor Init(ATemplate: string;  var AData; BSize: longint;
+      constructor Init(ATemplate: string; ADataSource: TDataSource; BSize: longint;
 			var Bounds: TRect;  ALabels,ARecInd: PDmxLink;
 			AHScrollBar,AVScrollBar: PScrollBar);
       constructor Load(var S: TStream);
@@ -126,8 +158,8 @@ type
       procedure DrawField(var Field: pDMXfieldrec);
       procedure EvaluateField;	VIRTUAL;
       procedure EvaluateRecord;  VIRTUAL;
-      procedure GetBlob(Num: integer; var Blob: pointer; var Len: integer);
-      procedure GotoPos(AFieldNum,ARecNum: integer);
+      // procedure GetBlob(Num: integer; var Blob: pointer; var Len: integer);
+      procedure GotoPos(AFieldNum,ARecNo: integer);
       procedure HandleEvent(var Event: TEvent);  VIRTUAL;
       procedure ProcessCommand(var Command: word;  XY: TPoint);
       procedure ProcessKey(var Event: TEvent);
@@ -214,9 +246,243 @@ begin
 end;
 
 
+{ ══ TDmxExtLabels ═════════════════════════════════════════════════════ }
+
+const  
+  Clicked : PDmxLink = nil;
+
+
+constructor TDmxExtLabels.Init(ALen: integer; AData: PCharArray; var Bounds: TRect);
+begin
+  TDmxLink.Init(Bounds);
+  Data	:= AData;
+  Len	:= ALen;
+end;
+
+
+constructor TDmxExtLabels.InitInsert(AOwner: PGroup; ALen: integer; AData: PCharArray);
+var  R : TRect;
+begin
+  AOwner^.GetExtent(R);
+  Inc(R.A.Y);
+  R.B.Y  := R.A.Y + 2;
+  R.Grow(-1, 0);
+  TDmxLink.Init(R);
+  Data := AData;
+  Len  := ALen;
+  Insert(AOwner);
+end;
+
+
+destructor TDmxExtLabels.Done;
+begin
+  If Heaped and (Data <> nil) and (Len > 0) then FreeMem(Data, Len);
+  TDmxLink.Done;
+end;
+
+
+constructor TDmxExtLabels.Load(var S: TStream);
+begin
+  TDmxLink.Load(S);
+  S.Read(Len, sizeof(Len));
+  If Len > 0 then
+    begin
+    GetMem(Data, Len);
+    S.Read(Data^, Len);
+    Heaped := TRUE;
+    end
+   else
+    Data := nil;
+  S.Read(DblBar,  sizeof(DblBar));
+end;
+
+
+procedure TDmxExtLabels.Store(var S: TStream);
+begin
+  TDmxLink.Store(S);
+  S.Write(Len, sizeof(Len));
+  If Len > 0 then S.Write(Data^, Len);
+  S.Write(DblBar,  sizeof(DblBar));
+end;
+
+
+procedure TDmxExtLabels.Draw;
+var  i	: integer;
+     A	: string;
+     B	: TDrawBuffer;
+begin
+  If (Link = nil) or (Link^.Delta.X >= Len) then
+    fillchar(A[1], Size.X, ' ')
+   else
+    begin
+    Move(Data^[Link^.Delta.X], A[1], Size.X);
+    If (Link^.Delta.X + Size.X > Len) then
+      fillchar(A[succ(Len - Link^.Delta.X)],(Size.X + Link^.Delta.X - Len), ' ');
+    end;
+  // A[0] := chr(lo(Size.X));
+  A[1] := chr(lo(Size.X));
+  MoveStr(B, A, GetColor(1));
+  If (Link^.Origin.Y <= Origin.Y) then i := pred(Size.Y) else i := 0;
+  WriteLine(0, i, Size.X, 1, B);
+  If (Size.Y > 1) then DrawRuler((i = 0), DblBar);
+end;
+
+
+procedure TDmxExtLabels.DrawRuler(Upper, AtLimit: boolean);
+const
+  LtArr		=  17;
+  RtArr		=  16;
+  Markers	: string[10] = '-=-=-=-=-='; // '─═┬╤╥╦┴╧╨╩';
+var
+  Color		: word;
+  i,X,width	: integer;
+  Mk		: integer;
+  frontcut	: integer;
+  fieldrec	: pDMXfieldrec;
+  A		: string;
+  B		: TDrawBuffer;
+begin
+  //If (longint(Size) = 0) or (Link = nil) or (Link^.DMXfield1 = nil) then Exit;
+  If ((Size.X = 0) and (Size.Y = 0)) or (Link = nil) or (Link^.DMXfield1 = nil) then Exit;
+  fieldrec  := Link^.LeftField;
+  If (fieldrec = nil) or (fieldrec^.screentab > Link^.Delta.X) then
+    fieldrec := Link^.DMXfield1;
+  If (fieldrec^.Next <> nil) then
+    While (fieldrec^.Next^.screentab <= Link^.Delta.X) and
+	  (fieldrec^.Next <> nil)
+     do
+      fieldrec := fieldrec^.Next;
+  frontcut  := Link^.Delta.X - fieldrec^.screentab;
+  If frontcut < 0 then frontcut := 0;
+  X := 0;
+  If (Clicked = @Self) then Color := GetColor(6) else Color := GetColor(5);
+  If AtLimit then Mk := 2 else Mk := 1;
+  MoveChar(B, Markers[Mk], Color, Size.X);
+  Inc(Mk, 2);
+  If not Upper then Inc(Mk, 4);
+  If (Clicked <> @Self) then While (X < Size.X) do
+    begin
+    With fieldrec^ do
+      begin
+      If (access and accHidden = 0) then
+	begin
+	If access and accDelimiter <> 0 then
+	  begin
+	  //If fieldrec^.typecode = '�' then char(B[X]) := Markers[Mk + 2]
+	  // else If fieldrec^.typecode = '�' then char(B[X]) := Markers[Mk];
+	  If fieldrec^.typecode = '�' then B[X] := Word(Markers[Mk + 2])
+	   else If fieldrec^.typecode = '�' then B[X] := Word(Markers[Mk]);
+
+	  Inc(X);
+	  end
+	 else
+	  begin
+	  X := X + shownwid - frontcut;
+	  end;
+	frontcut := 0;
+	end;
+      end;
+    fieldrec := fieldrec^.Next;
+    If (fieldrec = nil) and (Size.X > X) then X := Size.X;
+    end;
+  If Upper then i := pred(Size.Y) else i := 0;
+  WriteLine(0, i, Size.X, succ(i), B);
+end;
+
+
+procedure TDmxExtLabels.HandleEvent(var Event: TEvent);
+var  dX,dY  : integer;
+     Cmd    : word;
+     db	    : boolean;
+begin
+  TDmxLink.HandleEvent(Event);
+  With Event do
+    If (What and evMouseDown <> 0) then
+      begin
+      If (Link = nil) then Exit;
+      If (Link^.State and sfSelected = 0) then
+	Link^.Select
+       else
+	begin
+	Repeat
+	  Clicked := @Self;
+	  db := DblBar;
+	  DblBar := TRUE;
+	  DrawView;
+	  If (Link^.Origin.Y <= Origin.Y) then Cmd := cmDMX_Down else Cmd := cmDMX_Up;
+	  Message(Link, evCommand, Cmd, @Self);
+	  Application^.Idle;
+	  Clicked := nil;
+	  DblBar := db;
+	  DrawView;
+	Until not MouseEvent(Event, evMouseDown or evMouseAuto);
+	end;
+      ClearEvent(Event);
+      end
+    else
+    If (What and evMessage <> 0) then
+      begin
+      If (Command = cmDMX_ScrollBarChanged) then
+	begin
+	If (InfoPtr = Link) then DrawView;
+	end
+      else
+      If (Command = cmDMX_FixSize) and (Size.X > Len)
+	and (Link <> nil) and (Link^.Labels = @Self) then
+	begin
+	dX := (Owner^.Size.X - Size.X) + Len;
+	dY :=  Owner^.Size.Y;
+	Owner^.GrowTo(dX, dY);
+	end;
+      end;
+end;
+
+
+procedure TDmxExtLabels.SetState(AState: word; Enable: boolean);
+var  L : longint;
+begin
+  TDmxLink.SetState(AState, Enable);
+  If Enable and (AState and sfExposed <> 0) and (Link <> nil) then
+    begin
+    If (Link^.Origin.Y <= Origin.Y) then
+      GrowMode := gfGrowHiX or gfGrowLoY or gfGrowHiY
+     else
+      GrowMode := gfGrowHiX;
+    end;
+end;
+
+
+{ ══ TDmxLabels ════════════════════════════════════════════════════════ }
+
+constructor TDmxLabels.Init(DataStr: pstring;	var Bounds: TRect);
+begin
+  TDmxLink.Init(Bounds);
+  Move(DataStr, Data, sizeof(Data));
+  Len := length(DataStr^);
+  // Inc(PtrRec(Data).Ofs);
+  Data := PCharArray(PtrUInt(Data) + 1);
+end;
+
+
+constructor TDmxLabels.InitInsert(AOwner: PGroup;  DataStr: pstring);
+var  R : TRect;
+begin
+  AOwner^.GetExtent(R);
+  Inc(R.A.Y);
+  R.B.Y := R.A.Y + 2;
+  R.Grow(-1, 0);
+  TDmxLink.Init(R);
+  Move(DataStr, Data, sizeof(Data));
+  Len := length(DataStr^);
+  // Inc(PtrRec(Data).Ofs);
+  Data := PCharArray(PtrUInt(Data) + 1);
+  Insert(AOwner);
+end;
+
+
 { ══ TDmxScroller ══════════════════════════════════════════════════════ }
 
-constructor TDmxScroller.Init(ATemplate: string;  var AData;
+constructor TDmxScroller.Init(ATemplate: string; ADataSource: TDataSource;
 			      BSize: longint;  var Bounds: TRect;
 			      ALabels: PView;
 			      AHScrollBar,AVScrollBar: PScrollBar);
@@ -229,10 +495,10 @@ begin
   If Labels <> nil then Labels^.Link := @Self;
   InitValid	:= TRUE;
   DataBlockSize	:= BSize;
-  WorkingData	:= @AData;
+  WorkingDataSource := ADataSource;
   Limit.X	:= 0;
   InitStruct(ATemplate);
-  InitData(AData);
+  InitData(ADataSource);
   If (RecordSize > 0) then
     begin
     L := RecordSize;
@@ -292,10 +558,12 @@ begin
 end;
 
 
-function  TDmxScroller.DataAt(RecNum: integer) : pointer;
+
+function  TDmxScroller.RecordAt(RecNo: integer): TDataSet;
 begin
-  // DataAt := ptr(PtrRec(WorkingData).Seg, PtrRec(WorkingData).Ofs + RecNum * RecordSize);
-  DataAt := ptr(PtrUInt(WorkingData), PtrUInt(WorkingData) + RecNum * RecordSize);
+  // RecordAt := ptr(PtrRec(WorkingData).Seg, PtrRec(WorkingData).Ofs + RecNo * RecordSize);
+  WorkingDataSource.DataSet.MoveBy(RecNo - WorkingDataSource.DataSet.RecNo);
+  RecordAt := WorkingDataSource.DataSet;
 end;
 
 
@@ -324,8 +592,7 @@ begin
 end;
 
 
-var  EmptyRecord : byte;
-
+//var  EmptyRecord : byte;
 
 procedure TDmxScroller.Draw;
 var
@@ -377,11 +644,13 @@ begin
     While (Y < pred(rows)) do
       begin
       Inc(Y);
-      DrawingRecNum := Y + Delta.Y;
+      DrawingRecNo := Y + Delta.Y;
       If Y + Delta.Y < Limit.Y then
-	DrawRecord(Y, DataAt(DrawingRecNum)^)
-       else
-	DrawRecord(Y, EmptyRecord);
+	// DrawRecord(Y, RecordAt(DrawingRecNo)^)
+	DrawRecord(Y, RecordAt(DrawingRecNo))
+      else
+	// DrawRecord(Y, EmptyRecord);
+	DrawRecord(Y, nil);
       end;
     end;
   DDelta   := Delta;
@@ -395,24 +664,25 @@ begin
 end;
 
 
-procedure TDmxScroller.DrawRecord(Y: integer;	var DataRecord );
-var Color		: word;
-    ColorA, ColorB	: word;
-    I,X, width		: integer;
-    frontcut		: integer;
-    fieldrec		: pDMXfieldrec;
-    A			: string;
-    B			: TDrawBuffer;
+procedure TDmxScroller.DrawRecord(Y: integer; ADataSet: TDataSet);
+var 
+  Color			: word;
+  ColorA, ColorB	: word;
+  I, X, width		: integer;
+  frontcut		: integer;
+  fieldrec		: pDMXfieldrec;
+  A			: string;
+  B			: TDrawBuffer;
 begin
-  If (FirstField <> DMXfield1) then
-    begin
+  if (FirstField <> DMXfield1) then
+  begin
     FirstField := DMXfield1;
     LeftField  := DMXfield1;
-    While (LeftField^.Next <> nil) and
+    while (LeftField^.Next <> nil) and
 	  (LeftField^.Next^.screentab <= Delta.X)
      do
       LeftField := LeftField^.Next;
-    end;
+  end;
   If (LeftField = nil) then Exit;
   fieldrec := LeftField;
   frontcut := Delta.X - fieldrec^.screentab;
@@ -420,9 +690,9 @@ begin
   ColorA   := GetColor(1);
   ColorB   := GetColor(5);
   While (X < Size.X) do
-    begin
+  begin
     With fieldrec^ do
-      begin
+    begin
       If (access and accHidden = 0) then
 	begin
 	If access and accDelimiter <> 0 then
@@ -431,47 +701,48 @@ begin
 	  Color := ColorB;
 	  end
 	 else
+	 begin
+	  //If (@DataRecord = @EmptyRecord) then
+	  If (ADataSet = nil) then
 	  begin
-	  If (@DataRecord = @EmptyRecord) then
-	    begin
 	    // A[0] := chr(fieldrec^.shownwid);
 	    A[1] := chr(fieldrec^.shownwid);
 	    fillchar(A[1], fieldrec^.shownwid, ' ');
-	    end
-	   else
-	    A	:= FieldString(fieldrec,[], DataRecord);
+	  end
+	  else
+	    A := FieldString(fieldrec, [], ADataSet);
 	  If fieldsize > 0 then Color := ColorA else Color := ColorB;
-	  FieldText(A, Color, fieldrec, DataRecord);
+	  // FieldText(A, Color, fieldrec, DataRecord);
 	  // If length(A) > shownwid then A[0] := chr(shownwid);
 	  If length(A) > shownwid then A[1] := chr(shownwid);
 	  If frontcut > 0 then Delete(A, 1, frontcut);
-	  end;
+	end;
 	frontcut := 0;
 	MoveStr(B[X], A, Color);
 	X  := X + length(A);
 	end;
-      end;
+    end;
     fieldrec := fieldrec^.Next;
     If (fieldrec = nil) and (Size.X > X) then
-      begin
+    begin
       MoveChar(B[X], ' ', ColorB, Size.X - X);
       X  := Size.X;
-      end;
     end;
+  end;
   WriteLine(0, Y, Size.X, 1, B);
 end;
 
 
-procedure TDmxScroller.FieldText(var S: string;  var Color: word;
-				 Field: pDMXfieldrec;  var DataRec );
-begin
-end;
+//procedure TDmxScroller.FieldText(var S: string;  var Color: word;
+//				 Field: pDMXfieldrec; ADataSet: TDataSet);
+//begin
+//end;
 
 
-procedure TDmxScroller.GetData(var Rec );
-begin
-  pointer(Rec) := WorkingData
-end;
+//procedure TDmxScroller.GetData(var Rec );
+//begin
+//  pointer(Rec) := WorkingData
+//end;
 
 
 function  TDmxScroller.GetPalette : PPalette;
@@ -482,7 +753,8 @@ end;
 
 
 procedure TDmxScroller.HandleEvent(var Event: TEvent);
-var  WasHere : boolean;
+var  
+  WasHere : boolean;
 begin
   TScroller.HandleEvent(Event);
   With Event do
@@ -495,19 +767,23 @@ begin
 	  Message(InfoPtr, evCommand, cmDMX_Ack, @Self);
 	end
       else
-      If (((Command = cmDMX_DrawData) and (WorkingData = InfoPtr)) or
+      //If (((Command = cmDMX_DrawData) and (WorkingData = InfoPtr)) or
+      If ((Command = cmDMX_DrawData) or
 	  ((Command = cmDMX_Draw) and
-	  ((InfoPtr = nil) or (PDmxScroller(InfoPtr)^.WorkingData = WorkingData) or (What = evCommand))))
-      then DrawView
+	  ((InfoPtr = nil) or (PDmxScroller(InfoPtr)^.WorkingDataSource = WorkingDataSource) or (What = evCommand))))
+      then 
+        DrawView
       else
-      If not Locked and (((Command = cmDMX_LockData) and (WorkingData = InfoPtr)) or
+      // If not Locked and (((Command = cmDMX_LockData) and (WorkingData = InfoPtr)) or
+      If not Locked and ((Command = cmDMX_LockData) or
 	((Command = cmDMX_Lock) and
-	((InfoPtr = nil) or (PDmxScroller(InfoPtr)^.WorkingData = WorkingData) or (What = evCommand))))
+	((InfoPtr = nil) or (PDmxScroller(InfoPtr)^.WorkingDataSource = WorkingDataSource) or (What = evCommand))))
       then Locked := TRUE
       else
-      If Locked and (((Command = cmDMX_UnlockData) and (WorkingData = InfoPtr)) or
+      // If Locked and (((Command = cmDMX_UnlockData) and (WorkingData = InfoPtr)) or
+      If Locked and ((Command = cmDMX_UnlockData) or
 	((Command = cmDMX_Unlock) and
-	((InfoPtr = nil) or (PDmxScroller(InfoPtr)^.WorkingData = WorkingData) or (What = evCommand))))
+	((InfoPtr = nil) or (PDmxScroller(InfoPtr)^.WorkingDataSource = WorkingDataSource) or (What = evCommand))))
       then Locked := FALSE
       else
 	WasHere := FALSE;
@@ -516,13 +792,13 @@ begin
 end;
 
 
-procedure TDmxScroller.InitData(var AData );
+procedure TDmxScroller.InitData(ADataSource: TDataSource);
 begin
-  WorkingData := @AData;
+  WorkingDataSource := ADataSource;
 end;
 
 
-procedure TDmxScroller.InitStruct(var ATemplate );
+procedure TDmxScroller.InitStruct(var ATemplate);
 var
   SameFieldNum	:  boolean;
   WasSameNum	:  boolean;
@@ -964,15 +1240,15 @@ begin
 end;
 
 
-function  TDmxScroller.RecNumStr(RecNum: integer) : string;
+function  TDmxScroller.RecNoStr(RecNo: integer) : string;
 var  S : string;
 begin
-  If (RecNum >= RecordLimit) then
-    RecNumStr := '      '
+  If (RecNo >= RecordLimit) then
+    RecNoStr := '      '
    else
     begin
-    Str(succ(RecNum):5, S);
-    RecNumStr := S + ' ';
+    Str(succ(RecNo):5, S);
+    RecNoStr := S + ' ';
     end;
 end;
 
@@ -996,10 +1272,10 @@ begin
 end;
 
 
-procedure TDmxScroller.SetData(var Rec );
-begin
-  WorkingData := pointer(Rec)
-end;
+//procedure TDmxScroller.SetData(var Rec );
+//begin
+//  WorkingData := pointer(Rec)
+//end;
 
 
 procedure TDmxScroller.SetState(AState: word; Enable: boolean);
@@ -1081,15 +1357,82 @@ begin
   Message(Application, evCommand, cmDMX_WrongKey, @Self);
 end;
 
-  { ══ TDmxEditor ═══════════════════════════════════════════════════════ }
+
+{ ══ TDmxRecInd ════════════════════════════════════════════════════════ }
+
+constructor TDmxRecInd.Init(var Bounds: TRect;  Len: integer);
+begin
+  TDmxLink.Init(Bounds);
+  GrowMode  := gfGrowLoY or gfGrowHiY;
+end;
 
 
-constructor TDmxEditor.Init(ATemplate: string;  var AData;  BSize: longint;
+constructor TDmxRecInd.InitInsert(AOwner: PGroup; Len: integer);
+var  R : TRect;
+begin
+  AOwner^.GetExtent(R);
+  Inc(R.A.X);
+  R.A.Y  := pred(R.B.Y);
+  R.Grow(-1, 0);
+  If (R.B.X - R.A.X > Len) then R.B.X := R.A.X + Len;
+  R.B.Y  := succ(R.A.Y);
+  TDmxLink.Init(R);
+  GrowMode  := gfGrowLoY or gfGrowHiY;
+  Insert(AOwner);
+end;
+
+
+procedure TDmxRecInd.Draw;
+var  A	: string;
+     B	: TDrawBuffer;
+     C	: word;
+begin
+  C := GetColor(6);
+  MoveChar(B, '=', C, Size.X);
+  Str(succ(Link^.CurrentRecord):1, A);
+  If length(A) > Size.X then
+    MoveChar(B, showOVERFLOW, C, Size.X)
+   else
+    begin
+    If length(A) < Size.X then A := A + ' ';
+    If length(A) < Size.X then A := ' ' + A;
+    MoveStr(B[succ((Size.X) - length(A)) shr 1], A, C);
+    end;
+  WriteBuf(0, 0, Size.X, 1, B);
+end;
+
+
+procedure TDmxRecInd.HandleEvent(var Event: TEvent);
+begin
+  TDmxLink.HandleEvent(Event);
+  With Event do
+    begin
+    If (What and evMouseDown <> 0) then
+      begin
+      Message(Application, evCommand, cmDMX_RecIndClicked, @Self);
+      ClearEvent(Event);
+      end;
+    end;
+end;
+
+
+procedure TDmxRecInd.SetState(AState: word;  Enable: boolean);
+begin
+  If (AState and (sfActive or sfDragging) <> 0) then
+    TDmxLink.SetState(sfVisible, Enable xor (AState and sfDragging <> 0));
+  TDmxLink.SetState(AState, Enable);
+end;
+
+
+{ ══ TDmxEditor ═══════════════════════════════════════════════════════ }
+
+constructor TDmxEditor.Init(ATemplate: string;  ADataSource: TDataSource;  BSize: longint;
 			    var Bounds: TRect;  ALabels,ARecInd: PDmxLink;
 			    AHScrollBar,AVScrollBar: PScrollBar);
-var  inbounds  : TRect;
+var  
+  inbounds  : TRect;
 begin
-  TDmxScroller.Init(ATemplate, AData, BSize, Bounds, ALabels, AHScrollBar, AVScrollBar);
+  TDmxScroller.Init(ATemplate, ADataSource, BSize, Bounds, ALabels, AHScrollBar, AVScrollBar);
   CurrentField := DMXfield1;
   While (CurrentField <> nil) and
 	(CurrentField^.access and (accHidden or accSkip or accDelimiter) <> 0)
@@ -1258,10 +1601,11 @@ var
   B	 : TDrawBuffer;
 begin
   If (Field = nil) then Exit;
-  DrawingRecNum := CurrentRecord;
+  DrawingRecNo := CurrentRecord;
   If RedrawRecord then
     begin
-    If (RecordData <> nil) then DrawRecord(CurrentRecord-Delta.Y, RecordData^);
+    // If (RecordData <> nil) then DrawRecord(CurrentRecord-Delta.Y, RecordData^);
+    If (WorkingDataSource <> nil) then DrawRecord(CurrentRecord-Delta.Y, WorkingDataSource.DataSet);
     RedrawRecord := FALSE;
     end;
   DrawingField := (showanyway in ShowFmt) or (showCurrentField in ShowFmt);
@@ -1271,7 +1615,8 @@ begin
     If (access and (accHidden or accDelimiter) = 0) then
       begin
       If (showanyway in ShowFmt) then CurrentCurPos := CurPos;
-      S  := FieldString(Field, ShowFmt, RecordData^);
+      // S  := FieldString(Field, ShowFmt, RecordData^);
+      S  := FieldString(Field, ShowFmt, WorkingDataSource.DataSet);
       x1 := screentab - Delta.X;
       x2 := x1 + length(S);
       If x1 < 0 then
@@ -1299,7 +1644,7 @@ begin
 	      Color := GetColor(2);
 	      end;
 	  If hyde and (Color = GetColor(1)) then Color := Color or $80;
-	  FieldText(S, Color, Field, RecordData^);
+	  // FieldText(S, Color, Field, RecordData^);
 	  j := 0;
 	  k := 0;
 	  If (fieldsize > 0) then
@@ -1388,7 +1733,7 @@ begin
 	    Color := GetColor(6)
 	   else
 	    Color := GetColor(1);
-	  FieldText(S, Color, Field, RecordData^);
+	  // FieldText(S, Color, Field, RecordData^);
 	  If (length(S) > Len) and not front then Delete(S, 1, length(S) - Len);
 	  end;
 	MoveStr(B, S, Color);
@@ -1416,13 +1761,15 @@ procedure TDmxEditor.EvaluateRecord;
 begin
   ClearRecLock;
   RecordSelected := FALSE;
-  DrawRecord(CurrentRecord - Delta.Y, RecordData^);
+  // DrawRecord(CurrentRecord - Delta.Y, RecordData^);
+  DrawRecord(CurrentRecord - Delta.Y, WorkingDataSource.DataSet);
 end;
 
 
-procedure TDmxEditor.GetBlob(Num: integer; var Blob: pointer; var Len: integer);
-var  i	 : integer;
-     Fld : pDMXfieldrec;
+{procedure TDmxEditor.GetBlob(Num: integer; var Blob: pointer; var Len: integer);
+var  
+  i: integer;
+  Fld: pDMXfieldrec;
 begin
   Blob := nil;
   Len  := 0;
@@ -1430,21 +1777,22 @@ begin
   i    := 0;
   Fld  := DMXfield1;
   While (i < Num) do
-    begin
+  begin
     While (Fld <> nil) and (Fld^.typecode <> fldBLOB) do Fld := Fld^.Next;
     Inc(i);
-    end;
+  end;
   If (Fld <> nil) then
-    begin
+  begin
     Blob := RecordData;
     // Inc(word(Blob), Fld^.datatab);
     Blob := Pointer(PtrUInt(Blob) + Fld^.datatab);
     Len  := Fld^.fieldsize;
-    end;
+  end;
 end;
+}
 
 
-procedure TDmxEditor.GotoPos(AFieldNum,ARecNum: integer);
+procedure TDmxEditor.GotoPos(AFieldNum, ARecNo: integer);
 var X,Y	  : integer;
     RS,FS : boolean;
     F	  : pDMXfieldrec;
@@ -1454,12 +1802,12 @@ begin
     begin
     FS := FieldSelected;
     If FS then EvaluateField;
-    If (CurrentRecord = ARecNum) then RS := FALSE;
+    If (CurrentRecord = ARecNo) then RS := FALSE;
     If RS then EvaluateRecord;
     end
    else
     FS := FALSE;
-  CurrentRecord := ARecNum;
+  CurrentRecord := ARecNo;
   If not RecordSelected then
     begin
     Y := CurrentRecord - (Size.Y shr 1);
@@ -1488,12 +1836,14 @@ procedure TDmxEditor.HandleEvent(var Event: TEvent);
 var  XY	: TPoint;
      Cmd: word;
      RS,FS : boolean;
+
     function  OK4Command : boolean;
     begin
       With Event do
 	OK4Command := (What = evCommand) or (InfoPtr = nil) or
-	  ((PDmxScroller(InfoPtr)^.WorkingData = WorkingData));
+	  ((PDmxScroller(InfoPtr)^.WorkingDataSource = WorkingDataSource));
     end;
+
 begin
   RS := FALSE;
   FS := FALSE;
@@ -1543,9 +1893,15 @@ begin
 	end;
       end;
     If (What and evMessage <> 0) then
-      If ((Command = cmDMX_DrawData) and (WorkingData = InfoPtr)) or
-	 ((Command = cmDMX_LockData) and (WorkingData = InfoPtr)) or
-	 ((Command = cmDMX_UnlockData) and (WorkingData = InfoPtr)) or
+      //If ((Command = cmDMX_DrawData) and (WorkingData = InfoPtr)) or
+//	 ((Command = cmDMX_LockData) and (WorkingData = InfoPtr)) or
+//	 ((Command = cmDMX_UnlockData) and (WorkingData = InfoPtr)) or
+//	 ((Command = cmDMX_Draw) and OK4Command) or
+//	 ((Command = cmDMX_Lock) and OK4Command) or
+//	 ((Command = cmDMX_Unlock) and OK4Command)
+      If (Command = cmDMX_DrawData) or
+	 (Command = cmDMX_LockData) or
+	 (Command = cmDMX_UnlockData) or
 	 ((Command = cmDMX_Draw) and OK4Command) or
 	 ((Command = cmDMX_Lock) and OK4Command) or
 	 ((Command = cmDMX_Unlock) and OK4Command)
@@ -1623,8 +1979,9 @@ begin
     end;
   If ReDrawRecord then
     begin
-    DrawingRecNum := CurrentRecord;
-    DrawRecord(CurrentRecord - Delta.Y, RecordData^);
+    DrawingRecNo := CurrentRecord;
+    // DrawRecord(CurrentRecord - Delta.Y, RecordData^);
+    DrawRecord(CurrentRecord - Delta.Y, WorkingDataSource.DataSet);
     ReDrawRecord := FALSE;
     end;
 
@@ -1756,8 +2113,9 @@ begin
 		DoIt  :=  2;
 		If ReDrawRecord then
 		  begin
-		  DrawingRecNum := CurrentRecord;
-		  DrawRecord(CurrentRecord - Delta.Y, RecordData^);
+		  DrawingRecNo := CurrentRecord;
+		  // DrawRecord(CurrentRecord - Delta.Y, RecordData^);
+		  DrawRecord(CurrentRecord - Delta.Y, WorkingDataSource.DataSet);
 		  ReDrawRecord := FALSE;
 		  end;
 		CurrentField  :=  F;
@@ -1865,7 +2223,7 @@ begin
   If Chg then ChangeMade;
   If ReDrawRecord then
     begin
-    DrawingRecNum := CurrentRecord;
+    DrawingRecNo := CurrentRecord;
     DrawField(CurrentField);
     end;
 end;
@@ -1916,7 +2274,7 @@ var i,j,k : integer;
 
   procedure SetBoolean(B: boolean);
   begin
-    pboolean(FieldData)^ := B;
+    // pboolean(FieldData)^ := B;
     ChangeMade;
     DrawField(CurrentField);
     If not (Event.CharCode in [^G,^H,'_']) then QuitField(cmDMX_Enter);
@@ -1939,7 +2297,7 @@ var i,j,k : integer;
       var  i : integer;
       begin
 	With CurrentField^ do
-	  begin
+        begin
 	  If (typecode >= 'a') then
 	    L := decimals
 	   else
@@ -1947,9 +2305,10 @@ var i,j,k : integer;
 	    If On then
 	      L := L or (1 shl decimals)
 	     else
-	      L := pword(FieldData)^ and not (1 shl decimals);
+	      // L := pword(FieldData)^ and not (1 shl decimals);
+	      L := WorkingDataSource.DataSet.Fields[datatab].AsInteger and not (1 shl decimals);
 	    end;
-	  end;
+	end;
       end;
 
   begin
@@ -1958,13 +2317,13 @@ var i,j,k : integer;
       z := sizeof(L)
      else
       z := CurrentField^.fieldsize;
-    Move(FieldData^, L, z);
+    // Move(FieldData^, L, z);
     Case N of
        1:  SetCluster(TRUE);
       -1:  SetCluster(FALSE);
      else  SetCluster(not GetCluster);
       end;
-    Move(L, FieldData^, z);
+    // Move(L, FieldData^, z);
     ChangeMade;
     If (CurrentField^.typecode >= 'a') and (Owner <> nil) then
       DrawView
@@ -2056,7 +2415,7 @@ var i,j,k : integer;
 		end
 	       else WrongKeypressed(Event);
 	      end;
-	  '-','_' :
+	  '-', '_' :
 	      begin
 	      If (Min <> 0) and (A[1] = ' ') and
 		 (FirstChar > 1) and (pos('-', A) = 0) then
@@ -2160,7 +2519,7 @@ var i,j,k : integer;
 	      end;
 	    If (C = Event.CharCode) then
 	      begin
-	      pbyte(FieldData)^ := j;
+	      // pbyte(FieldData)^ := j;
 	      ChangeMade;
 	      Pick := nil;
 	      end
@@ -2173,14 +2532,14 @@ var i,j,k : integer;
 	  end;
 	'+','*',' ':
 	  begin
-	  Inc(pbyte(FieldData)^);
-	  If (pbyte(FieldData)^ > MaxItems) then pbyte(FieldData)^ := 0;
+	  //Inc(pbyte(FieldData)^);
+	  //If (pbyte(FieldData)^ > MaxItems) then pbyte(FieldData)^ := 0;
 	  ChangeMade;
 	  end;
 	^G, ^H,'-':
 	  begin
-	  If (pbyte(FieldData)^ = 0) then
-	    pbyte(FieldData)^ := MaxItems else Dec(pbyte(FieldData)^);
+	  //If (pbyte(FieldData)^ = 0) then
+	  //  pbyte(FieldData)^ := MaxItems else Dec(pbyte(FieldData)^);
 	  ChangeMade;
 	  end;
        else WrongKeypressed(Event);
@@ -2275,15 +2634,16 @@ begin
 		      end;
 		    If Go then
 		      begin
-		      If (inx > 0) and (length(pstring(FieldData)^) <= CurPos) then Go := FALSE;
+		      // If (inx > 0) and (length(pstring(FieldData)^) <= CurPos) then Go := FALSE;
+		      If (inx > 0) and (WorkingDataSource.DataSet.Fields.Count <= CurPos) then Go := FALSE;
 		      If Go then
 			begin
 			ChangeMade;
-			If (fieldsize - CurPos - inx > 1) then
-			  Move(pstring(FieldData)^[CurPos + inx + 1],
-				pstring(FieldData)^[CurPos + inx], fieldsize - CurPos - inx - 1);
-			pstring(FieldData)^[pred(fieldsize)] := fillvalue;
-			If (inx <> 0) and (pbyte(FieldData)^ > 0) then Dec(pstring(FieldData)^[0]);
+			//If (fieldsize - CurPos - inx > 1) then
+			//  Move(pstring(FieldData)^[CurPos + inx + 1],
+			//	pstring(FieldData)^[CurPos + inx], fieldsize - CurPos - inx - 1);
+			//pstring(FieldData)^[pred(fieldsize)] := fillvalue;
+			//If (inx <> 0) and (pbyte(FieldData)^ > 0) then Dec(pstring(FieldData)^[0]);
 			end;
 		      end;
 		    end;
@@ -2298,34 +2658,35 @@ begin
 		    begin
 		    end;
 	       else begin
-		    If inx = 0 then i := fieldsize else i := pbyte(FieldData)^;
+		    // If inx = 0 then i := fieldsize else i := pbyte(FieldData)^;
+		    If inx = 0 then i := fieldsize else i := 0;
 		    If InsOn then
 		      begin
-		      If (fieldsize = succ(inx)) then pstring(FieldData)^[inx] := fillvalue;
-		      If (ord(pstring(FieldData)^[pred(fieldsize)]) and $DF = 0)
-			  or
-			 ((inx = 1) and (length(pstring(FieldData)^) < pred(fieldsize)))
-		       then
-			begin
+		      // If (fieldsize = succ(inx)) then pstring(FieldData)^[inx] := fillvalue;
+		      //If (ord(pstring(FieldData)^[pred(fieldsize)]) and $DF = 0)
+		      //  or
+		      //	 ((inx = 1) and (length(pstring(FieldData)^) < pred(fieldsize)))
+		      If (inx = 1) then
+  		      begin
 			ChangeMade;
 			If (inx <> 0) then
 			  begin
-			  If (CurPos > i) then
-			    begin
-			    fillchar(pstring(FieldData)^[succ(i)], CurPos-i, fillvalue);
-			    pbyte(FieldData)^ := succ(CurPos);
-			    end
-			   else
-			    Inc(pbyte(FieldData)^);
+			  //If (CurPos > i) then
+			  //begin
+			  //  fillchar(pstring(FieldData)^[succ(i)], CurPos-i, fillvalue);
+			  //  pbyte(FieldData)^ := succ(CurPos);
+			  //end
+			  //else
+			  //  Inc(pbyte(FieldData)^);
 			  end;
-			If succ(CurPos) + inx < fieldsize then
-			  Move(pstring(FieldData)^[CurPos + inx],
-				pstring(FieldData)^[CurPos + inx + 1],
-				fieldsize - CurPos - inx - 1);
-			pstring(FieldData)^[CurPos + inx] := Event.CharCode;
-			end
-		       else
-			begin
+			//If succ(CurPos) + inx < fieldsize then
+			//  Move(pstring(FieldData)^[CurPos + inx],
+			//	pstring(FieldData)^[CurPos + inx + 1],
+			//	fieldsize - CurPos - inx - 1);
+			//pstring(FieldData)^[CurPos + inx] := Event.CharCode;
+		      end
+		      else
+		      begin
 			WrongKeypressed(Event);
 			Go := FALSE;
 			end;
@@ -2334,12 +2695,12 @@ begin
 		      begin
 		      ChangeMade;
 		      If (inx <> 0) and (CurPos >= i) then
-			begin
-			fillchar(pstring(FieldData)^[succ(i)],
-				  CurPos - i, fillvalue);
-			pbyte(FieldData)^ := succ(CurPos);
-			end;
-		      pstring(FieldData)^[CurPos + inx] := Event.CharCode;
+		      begin
+			//fillchar(pstring(FieldData)^[succ(i)],
+			//	  CurPos - i, fillvalue);
+			//pbyte(FieldData)^ := succ(CurPos);
+		      end;
+		      //pstring(FieldData)^[CurPos + inx] := Event.CharCode;
 		      end;
 		    If CurPos < fieldsize - inx - 1 then
 		      begin
@@ -2353,131 +2714,131 @@ begin
 	      end;
 
 	    fldCHARVAL:
-	      begin
-	      Move(FieldData^, A[1], fieldsize);
+	    begin
+	      //Move(FieldData^, A[1], fieldsize);
 	      // A[0] := chr(fieldsize);
 	      A[1] := chr(fieldsize);
 	      j := 0;
 	      For i := 1 to fieldsize do
-		begin
+	      begin
 		If (ord(A[i]) and not $20 = 0) then A[i] := ' ' else
 		If (A[i] in ['-', '.', '0'..'9']) then j := 1;
-		end;
+	      end;
 	      If j = 0 then
-		begin
+	      begin
 		fillchar(A[1], fieldsize, '0');
 		If fieldsize - decimals > 2 then fillchar(A[1], fieldsize - decimals - 2, ' ');
 		If decimals > 0 then A[fieldsize - decimals] := '.';
-		end;
+	      end;
 	      If EffectField(FALSE, -1, 0) then
-		begin
+	      begin
 		i := 1;
 		While (i < length(A)) and (A[i] <= '.') do
 		  begin
 		  If (A[succ(i)] <> '.') then A[i] := CurrentField^.fillvalue;
 		  Inc(i);
 		  end;
-		Move(A[1], FieldData^, fieldsize);
-		end;
+		// Move(A[1], FieldData^, fieldsize);
 	      end;
+	    end;
 
 	    fldBYTE:
-	      begin
-	      Str(pbyte(FieldData)^:truelen, A);
-	      If EffectField(FALSE, 0,255) then Val(A,pbyte(FieldData)^,i);
-	      end;
+	    begin
+	      //Str(pbyte(FieldData)^:truelen, A);
+	      //If EffectField(FALSE, 0,255) then Val(A,pbyte(FieldData)^,i);
+	    end;
 
 	    fldSHORTINT:
-	      begin
-	      Str(pshortint(FieldData)^:truelen, A);
-	      If EffectField(FALSE, -128,127) then Val(A,pshortint(FieldData)^,i);
-	      end;
+	    begin
+	      //Str(pshortint(FieldData)^:truelen, A);
+	      //If EffectField(FALSE, -128,127) then Val(A,pshortint(FieldData)^,i);
+	    end;
 
 	    fldWORD:
-	      begin
-	      Str(pword(FieldData)^:truelen, A);
-	      If EffectField(FALSE, 0,65535) then Val(A,pword(FieldData)^,i);
-	      end;
+	    begin
+	      //Str(pword(FieldData)^:truelen, A);
+	      //If EffectField(FALSE, 0,65535) then Val(A,pword(FieldData)^,i);
+	    end;
 
 	    fldINTEGER:
-	      begin
-	      Str(pinteger(FieldData)^:truelen, A);
-	      If EffectField(FALSE, -1 - MaxInt, MaxInt) then Val(A,pinteger(FieldData)^,i);
-	      end;
+	    begin
+	      //Str(pinteger(FieldData)^:truelen, A);
+	      //If EffectField(FALSE, -1 - MaxInt, MaxInt) then Val(A,pinteger(FieldData)^,i);
+	    end;
 
 	    fldLONGINT:
-	      begin
-	      Str(plongint(FieldData)^:truelen, A);
-	      If EffectField(FALSE, -1 - MaxLongInt, MaxLongInt) then
-		Val(A,plongint(FieldData)^,i);
-	      end;
+	    begin
+	      //Str(plongint(FieldData)^:truelen, A);
+	      //If EffectField(FALSE, -1 - MaxLongInt, MaxLongInt) then
+	      //	Val(A,plongint(FieldData)^,i);
+	    end;
 
 	    fldREALNUM:
-	      begin
-	      If decimals > 0 then i := 1 else i := 0;
-	      Str(prealnum(FieldData)^:truelen + i:decimals, A);
-	      If EffectField(FALSE, -1, 0) then Val(A,prealnum(FieldData)^,i);
-	      end;
+	    begin
+	      //If decimals > 0 then i := 1 else i := 0;
+	      //Str(prealnum(FieldData)^:truelen + i:decimals, A);
+	      //If EffectField(FALSE, -1, 0) then Val(A,prealnum(FieldData)^,i);
+	    end;
 
 	    fldENUM:
-	      begin
+	    begin
 	      EditEnumField;
-	      end;
+	    end;
 
 	    fldBOOLEAN:
-	      begin
+	    begin
 	      If (access and accReadOnly <> 0) or Locked or not CheckRecLock then
-		begin
+	      begin
 		WrongKeypressed(Event);
-		end
-	       else
-		begin
+	      end
+	      else
+	      begin
 		Event.CharCode := upcase(Event.CharCode);
 		If (Event.CharCode >= '_') then
-		  begin
-		  If pboolean(FieldData)^ then Event.CharCode := ^G
-		  end
+		begin
+		  //If pboolean(FieldData)^ then Event.CharCode := ^G
+		end
 		else
 		If (Event.CharCode >= ' ') then
-		  begin
-		  If pboolean(FieldData)^ then
-		    Event.CharCode := '-' else Event.CharCode := '+';
-		  end;
+		begin
+		  //If pboolean(FieldData)^ then
+		  //  Event.CharCode := '-' else Event.CharCode := '+';
+		end;
 		Case Event.CharCode of
 		  '_',
 		  '+':	SetBoolean(TRUE);
 		  ^G,^H,
 		  '-':	SetBoolean(FALSE);
-		 else	WrongKeypressed(Event);
-		  end;
+		  else	WrongKeypressed(Event);
 		end;
 	      end;
+	    end;
 
 	    fldCLUSTER:
-	      begin
+	    begin
 	      If (access and accReadOnly <> 0) or Locked or not CheckRecLock then
-		begin
+	      begin
 		WrongKeypressed(Event);
-		end
-	       else
-		begin
+	      end
+	      else
+	      begin
 		Event.CharCode := upcase(Event.CharCode);
 		Case Event.CharCode of
 		  '+':	ToggleCluster(1);
 		  ^G,^H,
 		  '-':	ToggleCluster(-1);
-		 else	ToggleCluster(0);
-		  end;
+		  else	ToggleCluster(0);
 		end;
 	      end;
+	    end;
 
 	    fldHEXVALUE:
-	      begin
+	    begin
 	      Event.CharCode := upcase(Event.CharCode);
 	      If Event.CharCode in [^G,^H, '0'..'9', 'A'..'F'] then
-		begin
+	      begin
 		A  := '';
-		For i := 1 to fieldsize do A := hexbyte(ord(pstring(FieldData)^[pred(i)])) + A;
+		// For i := 1 to fieldsize do A := hexbyte(ord(pstring(FieldData)^[pred(i)])) + A;
 		If (length(A) > truelen) then Delete(A, 1,1);
 		If EffectField(TRUE, 0, 0) then
 		  begin
@@ -2489,13 +2850,13 @@ begin
 		    k := ord(A[succ(i shl 1)]);
 		    If j > ord('9') then Dec(j, 7);
 		    If k > ord('9') then Dec(k, 7);
-		    pstring(FieldData)^[pred(fieldsize) - i] := chr(((j and 15) shl 4) or (k and 15));
+		    // pstring(FieldData)^[pred(fieldsize) - i] := chr(((j and 15) shl 4) or (k and 15));
 		    end;
 		  end;
-		end
-	       else
+	      end
+	      else
 		WrongKeypressed(Event);
-	      end;
+	    end;
 	    end;
 	  end;
 	If Event.What <> evNothing then FirstKey := FALSE;
@@ -2687,7 +3048,7 @@ begin
   RedrawRecord	:= TRUE;
   FieldSelected := TRUE;
   FieldAltered	:= FALSE;
-  FieldData := ptr(seg(RecordData^), ofs(RecordData^) + CurrentField^.datatab);
+  // FieldData := ptr(seg(RecordData^), ofs(RecordData^) + CurrentField^.datatab);
   FirstKey  := TRUE;
   If (showCurrentField in ShowFmt) then
     ShowFmt := [showanyway, showCurrentField]
@@ -2716,17 +3077,17 @@ begin
   F := DMXfield1;
   ActualRecordNum := CurrentRecord;
   ActualRecordNum := BaseRecord + ActualRecordNum;
-  RecordData	 := DataAt(CurrentRecord);
+  // RecordData	 := RecordAt(CurrentRecord);
   RecordAltered	 := FALSE;
   FieldAltered	 := FALSE;
   RecordSelected := TRUE;
   ClearRecLock;
   Message(Owner, evBroadcast, cmDMX_SetupRecord, @Self);
   If (showCurrentField in ShowFmt) and (CurrentField <> nil) and (DMXfield1 = F) then
-    begin
-    FieldData := ptr(seg(RecordData^), ofs(RecordData^) + CurrentField^.datatab);
+  begin
+    // FieldData := ptr(seg(RecordData^), ofs(RecordData^) + CurrentField^.datatab);
     DrawField(CurrentField);
-    end;
+  end;
 end;
 
 
@@ -2763,7 +3124,7 @@ var  FData : pointer;
      fn    : integer;
      cltr  : boolean;
 begin
-  If (RecordData = nil) or (Field = nil) or Locked then Exit;
+  // If (RecordData = nil) or (Field = nil) or Locked then Exit;
   If CheckRecLock then
     begin
     cltr := FALSE;
@@ -2775,8 +3136,8 @@ begin
 	begin
 	With Field^ do
 	  If (access and accReadOnly = 0) and (fieldsize > 0) then
-	    begin
-	    FData := ptr(seg(RecordData^), ofs(RecordData^) + datatab);
+	  begin
+	    // FData := ptr(seg(RecordData^), ofs(RecordData^) + datatab);
 	    If (Field^.typecode <> fldCLUSTER) then fillchar(FData^, fieldsize, fillvalue);
 	    Case upcase(typecode) of
 	      fldSTR,
@@ -2795,7 +3156,7 @@ begin
 		end;
 	      end;
 	    ChangeMade;
-	    end;
+	  end;
 	end;
       If Whole and (fn <> 0) then Field := Field^.Next else Field := nil;
       end;
@@ -2817,12 +3178,13 @@ begin
     begin
     ClearingRec := TRUE;
     field := DMXfield1;
-    If (RecordData <> nil) then
+    // If (RecordData <> nil) then
+    If (WorkingDataSource <> nil) then
       While (field <> nil) do
-	begin
+      begin
 	ZeroizeField(FALSE, field);
 	field := field^.Next;
-	end;
+      end;
     If not ClearingRec then DrawView;
     ClearingRec := FALSE;
     end;

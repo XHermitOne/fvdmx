@@ -40,7 +40,7 @@ type
     PLtdWindow		= ^TLtdWindow;
     TLtdWindow		=  OBJECT(TWindow)
 	Limit	: TRect;
-      constructor Init(var Bounds,ALimit: TRect; ATitle: TTitleStr; ANumber: integer);
+      constructor Init(var Bounds,ALimit: TRect; ATitle: TTitleStr; ANumber: Sw_Integer);
       constructor Load(var S: TStream);
       procedure ChangeBounds(var Bounds: TRect);  VIRTUAL;
       procedure InitFrame;  VIRTUAL;
@@ -59,7 +59,6 @@ implementation
 
 
 { ══════════════════════════════════════════════════════════════════════ }
-
 
 procedure AssignWinRect(var Bounds: TRect;  MaxX, MaxY: integer);
 var  
@@ -110,7 +109,6 @@ end;
 
 { ══ TLtdFrame ═════════════════════════════════════════════════════════ }
 
-
 procedure TLtdFrame.Draw;
 { draws a zoom icon if the LtdWindow is at maximum size }
 var 
@@ -131,12 +129,12 @@ end;
 
 { ══ TLtdWindow ════════════════════════════════════════════════════════ }
 
-
 constructor TLtdWindow.Init(var Bounds,ALimit	: TRect;
 				ATitle		: TTitleStr;
-				ANumber		: integer);
+				ANumber		: Sw_Integer);
 begin
-  TWindow.Init(Bounds, ATitle, ANumber);
+  // TWindow.Init(Bounds, ATitle, ANumber);
+  inherited Init(Bounds, ATitle, ANumber);
   Move(ALimit, Limit, sizeof(Limit));
 end;
 
